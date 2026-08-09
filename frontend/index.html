@@ -157,6 +157,8 @@
               const bodyClip = new THREE.AnimationClip("body_idle", gltf.animations[0].duration, bodyTracks);
               mixer = new THREE.AnimationMixer(model);
               mixer.clipAction(bodyClip).play();
+              mixer.setTime(Math.min(0.12, bodyClip.duration));
+              mixer.timeScale = 0;
             }
           }
           document.querySelector("#status").textContent = "Sentientia AI online";
