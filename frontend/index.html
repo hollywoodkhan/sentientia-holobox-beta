@@ -35,6 +35,7 @@
       .suggestions button { min-height: 34px; padding: 7px 11px; background: transparent; color: #315c3e; border: 1px solid #174b2a26; font-size: .78rem; font-weight: 600; }
       .brand { position: absolute; z-index: 4; left: 24px; bottom: 22px; display: flex; align-items: center; gap: 10px; color: #dfffd5; letter-spacing: .12em; text-transform: uppercase; font-weight: 800; font-size: .74rem; }
       .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; color: #092013; background: #78df54; font-size: 1rem; }
+      #avatar-fallback { display: none; position: absolute; z-index: 2; left: 50%; bottom: -5%; translate: -50% 0; height: min(94vh, 900px); max-width: 92%; object-fit: contain; filter: drop-shadow(0 28px 45px #0009); pointer-events: none; }
       .voice-bars { position: absolute; z-index: 3; left: 50%; bottom: 6%; translate: -50% 0; display: flex; align-items: end; gap: 5px; height: 30px; padding: 8px 12px; border-radius: 999px; background: #071711bb; backdrop-filter: blur(12px); }
       .voice-bars i { display: block; width: 3px; height: 5px; background: #7ee25a; border-radius: 3px; transition: height .1s; }
       canvas { position: absolute; inset: 0; z-index: 0; display: block; }
@@ -45,6 +46,7 @@
     <main>
       <section id="stage" aria-label="Sentientia AI avatar">
         <div id="status">Sentientia AI online</div>
+        <img id="avatar-fallback" src="./assets/sentientia-ai-mascot.png" alt="Sentientia male AI learning advisor" />
         <div class="voice-bars" aria-hidden="true"><i style="--bar:.5"></i><i style="--bar:1"></i><i style="--bar:.7"></i><i style="--bar:1.2"></i><i style="--bar:.6"></i></div>
         <div class="brand"><span class="brand-mark">S</span><span>Sentientia · Intelligent Learning</span></div>
       </section>
@@ -116,9 +118,8 @@
         });
       }
 
-      new GLTFLoader().load(
-        "./assets/sentientia-avatar.glb?v=20260810-2",
-        (gltf) => {
+      const avatarLoader = new GLTFLoader();
+      function mountAvatar(gltf) {
           const model = gltf.scene;
           avatar.add(model);
           model.traverse((object) => {
@@ -144,13 +145,29 @@
             mixer.clipAction(gltf.animations[0]).play();
           }
           document.querySelector("#status").textContent = "Sentientia AI online";
-        },
-        undefined,
-        (error) => {
-          console.error("Avatar model failed to load", error);
-          document.querySelector("#status").textContent = "Avatar unavailable";
-        },
-      );
+      }
+
+      function showAvatarFallback(error) {
+        const message = error?.message || String(error || "unknown error");
+        console.error("Avatar model failed to load", error);
+        document.querySelector("#avatar-fallback").style.display = "block";
+        const status = document.querySelector("#status");
+        status.textContent = "Sentientia AI · compatibility mode";
+        status.title = `3D model error: ${message}`;
+      }
+
+      const avatarUrl = "./assets/sentientia-avatar.glb?v=20260810-3";
+      avatarLoader.load(avatarUrl, mountAvatar, undefined, async (firstError) => {
+        console.warn("Direct GLB load failed; retrying from memory", firstError);
+        try {
+          const response = await fetch(avatarUrl, { cache: "no-store" });
+          if (!response.ok) throw new Error(`GLB download failed (${response.status})`);
+          const buffer = await response.arrayBuffer();
+          avatarLoader.parse(buffer, location.href, mountAvatar, showAvatarFallback);
+        } catch (retryError) {
+          showAvatarFallback(retryError);
+        }
+      });
 
       let mouthLevel = 0;
       let analyser = null;
