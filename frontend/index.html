@@ -27,6 +27,9 @@
       .controls { display: flex; align-items: center; gap: 10px; color: #6d8072; font-size: .86rem; }
       .controls button { min-height: 38px; background: white; color: #174b2a; border: 1px solid #183f2530; }
       #reply { min-height: 100px; padding: 17px; background: white; border: 1px solid #183f2522; border-radius: 14px; color: #203d2a; box-shadow: 0 12px 35px #174b2a0b; white-space: pre-wrap; }
+      #sources { display: flex; flex-wrap: wrap; gap: 7px; min-height: 0; }
+      #sources:empty { display: none; }
+      #sources span { padding: 6px 9px; border-radius: 999px; background: #e2f5e6; color: #315c3e; font-size: .72rem; font-weight: 650; }
       #status { position: absolute; z-index: 2; left: 20px; top: 20px; padding: 7px 11px; background: #071711cc; border: 1px solid #ffffff17; border-radius: 999px; color: #a6f58d; font-size: .78rem; }
       .suggestions { display: flex; flex-wrap: wrap; gap: 8px; }
       .suggestions button { min-height: 34px; padding: 7px 11px; background: transparent; color: #315c3e; border: 1px solid #174b2a26; font-size: .78rem; font-weight: 600; }
@@ -67,6 +70,7 @@
           <span id="voice-status">Browser voice</span>
         </div>
         <div id="reply" role="status" aria-live="polite">Ready when you are.</div>
+        <div id="sources" aria-label="Answer sources"></div>
       </aside>
     </main>
 
@@ -224,22 +228,29 @@
         const data = await response.json();
         if (!response.ok) throw new Error(data.detail || `Request failed (${response.status})`);
         console.log("Avatar reply:", data.reply);
-        return data.reply;
+        return data;
       }
 
       const form = document.querySelector("#chat-form");
       const input = document.querySelector("#prompt");
       const reply = document.querySelector("#reply");
+      const sources = document.querySelector("#sources");
       const send = document.querySelector("#send");
       const mic = document.querySelector("#mic");
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         send.disabled = true;
         reply.textContent = "Thinking…";
+        sources.replaceChildren();
         try {
-          const text = await sendPrompt(input.value.trim());
-          reply.textContent = text;
-          speakReply(text);
+          const data = await sendPrompt(input.value.trim());
+          reply.textContent = data.reply;
+          (data.sources || []).forEach((source) => {
+            const badge = document.createElement("span");
+            badge.textContent = source.label;
+            sources.append(badge);
+          });
+          speakReply(data.reply);
           input.value = "";
         } catch (error) {
           console.error(error);

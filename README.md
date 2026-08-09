@@ -4,6 +4,10 @@ A shareable Sentientia prototype featuring a Three.js-enhanced male AI learning
 advisor, microphone input, browser speech, a FastAPI/Gemini backend on Google
 Cloud Run, and a static frontend on Firebase Hosting.
 
+The backend includes a lightweight in-container retrieval layer that ranks verified
+knowledge passages for each question and returns source labels without requiring a
+managed vector database.
+
 Live demo: https://sentientia-holobox-beta.web.app/
 
 ## Project structure
@@ -11,6 +15,8 @@ Live demo: https://sentientia-holobox-beta.web.app/
 ```text
 backend/
   main.py
+  retrieval.py
+  event_knowledge.json
   requirements.txt
   Dockerfile
 frontend/
