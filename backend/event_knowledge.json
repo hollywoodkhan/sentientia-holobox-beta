@@ -1,0 +1,216 @@
+{
+  "knowledge_base": {
+    "name": "Sentientia client demo knowledge",
+    "purpose": "Verified context for a public beta conversational avatar",
+    "answering_rules": [
+      "Distinguish current capabilities from roadmap or proposed capabilities.",
+      "Treat pitch-deck scenarios and dashboard figures as illustrative unless explicitly marked as operational results.",
+      "Do not provide pricing, contractual commitments, implementation timelines, named client references, or compliance guarantees unless a Sentientia representative confirms them.",
+      "When a request needs discovery, invite the visitor to speak with a Sentientia learning strategist."
+    ]
+  },
+  "company": {
+    "legal_name": "Sentientia Interactive Services Pvt. Ltd.",
+    "positioning": "An enterprise learning partner combining custom content, multilingual localization, learning platforms, digital academies, and governed AI.",
+    "website": "https://sentientia.ai/",
+    "public_contact": {
+      "email": "support@sentientia.com",
+      "india_phone": "+91 9819715903",
+      "us_phone": "+1 (585) 535 9737",
+      "address": "Crystal Plaza, E-309, Andheri Link Road, Mumbai, Maharashtra 400053"
+    },
+    "public_website_highlights": [
+      "Custom digital learning assets and enterprise learning systems",
+      "Localization across 15+ languages",
+      "Learning platform and digital academy deployment",
+      "Practical, governed AI knowledge workflows",
+      "50+ successful enterprise platform rollouts",
+      "Experience across BFSI, oil and gas, manufacturing, healthcare, government, IT and ITES, education, and charities"
+    ],
+    "business_outcomes": [
+      "Faster role-specific onboarding",
+      "Sales readiness and product knowledge",
+      "Manager and leadership development",
+      "Stronger compliance understanding and reporting",
+      "Customer and partner education"
+    ],
+    "connected_model": [
+      "Learning strategy and consulting",
+      "Instructional design and custom content",
+      "Multilingual localization and voiceover",
+      "LMS and LXP implementation",
+      "Digital academies and training portals",
+      "AI-enabled learning experiences",
+      "Learning analytics and tracking"
+    ]
+  },
+  "learning_services": {
+    "custom_elearning": [
+      "Structured page-turner modules for theory and compliance",
+      "Interactive modules with animation, branching, scenarios, and motion graphics",
+      "Advanced simulations, gamification, and performance-based immersive learning",
+      "Microlearning, video learning, assessments, certifications, and SCORM-compliant modules"
+    ],
+    "methodology": [
+      "Needs and audience analysis",
+      "Bloom's taxonomy-aligned objectives and instructional design",
+      "Content architecture, knowledge mapping, and storyboarding",
+      "Multimedia production and interactive assessment",
+      "Reinforcement, quality review, and deployment-ready sign-off"
+    ],
+    "localization": {
+      "approach": "Localization can include translation, cultural adaptation, regional imagery, professional voiceover, subtitles, and right-to-left design where required.",
+      "documented_languages": [
+        "Arabic",
+        "English",
+        "French",
+        "German",
+        "Spanish",
+        "Italian",
+        "Japanese",
+        "Chinese",
+        "Hindi",
+        "Portuguese",
+        "Dutch",
+        "Korean"
+      ]
+    },
+    "training_topics": [
+      "Leadership and first-time manager development",
+      "Communication, emotional intelligence, negotiation, conflict resolution, and executive presence",
+      "Consultative selling, customer experience, key account management, and service excellence",
+      "AI literacy, generative AI for business, digital transformation, data-driven decisions, and innovation",
+      "Healthcare, pharma, BFSI, compliance, safety, technical, operations, and quality learning"
+    ]
+  },
+  "products": {
+    "bluetree_lms": {
+      "status": "Current platform capabilities described in supplied product materials",
+      "summary": "A white-label, mobile-ready enterprise LMS for structured, blended, social, and personalized learning, with extensibility for AI and third-party content.",
+      "current_capabilities": [
+        "Custom branding, themes, dashboards, landing pages, and multi-language support",
+        "Classroom, virtual, blended, online, social, and location-based training",
+        "SCORM 1.2 and 2004, AICC, LTI, IMS packages, video, HTML, files, folders, books, and external URLs",
+        "Assignments, quizzes, surveys, certificates, learning plans, competency allocation, forums, chat, glossaries, wikis, workshops, and interactive video",
+        "Course creation wizard, personalized and branching learning paths, bulk enrollment, waitlists, attendance, and resource scheduling",
+        "Custom reports, scheduled reports, graphical reports, SQL or ad-hoc reporting, and CSV or XLS export",
+        "Custom roles and permissions, SSO using common enterprise standards, LDAP or Active Directory integration, APIs, and web services",
+        "Optional integrations described for conferencing, CRM, SharePoint, CMS, e-commerce, calendars, and extended-enterprise or multi-tenant use",
+        "Gamification including points, badges, leaderboards, and learning games",
+        "AI assistance can be customized for learner support, content generation, and teacher productivity",
+        "WhatsApp learning assistance can help learners ask questions and locate relevant LMS resources"
+      ],
+      "qualification": "Specific integrations, add-ons, mobile support, security requirements, and implementation scope must be confirmed during discovery."
+    },
+    "nudge_ai": {
+      "status": "Current product plus a separately labelled roadmap",
+      "identity": "Nudge is Sentientia's AI learning platform. It brings intelligent learning, coaching, reinforcement, and knowledge support into the flow of work.",
+      "summary": "Its current experience is WhatsApp-native and designed to deliver structured, AI-supported learning in the flow of work for distributed, frontline, field, sales, service, retail, operations, partner, and deskless teams.",
+      "current_capabilities": [
+        "WhatsApp-based learner onboarding and QR invitations",
+        "Module-based microlearning, daily nudges, reminders, and re-engagement",
+        "Quizzes plus AI-evaluated writing and voice-note exercises",
+        "Knowledge-base-driven learner assistance",
+        "AI generation of learning content and multiple-choice questions from uploaded PDF knowledge documents",
+        "Admin dashboards, learner and module progress, scores, recent activity, reporting, and CSV export",
+        "Badges and certification links"
+      ],
+      "roadmap_not_current_commitments": [
+        "Advanced drag-and-drop and conditional learning journeys",
+        "Role-play simulations and personalized AI coaching",
+        "Manager dashboards and intervention recommendations",
+        "HRMS, LMS, CRM, SSO, BI, Slack, and Microsoft Teams integrations",
+        "Advanced ROI, cohort, skill-gap, and business-outcome analytics",
+        "Compliance audit controls and certificate renewal workflows",
+        "Expanded multilingual and regional voice learning",
+        "Ready-to-use content marketplace",
+        "Unified multi-channel delivery",
+        "Enterprise multi-tenancy, governance, approvals, and data controls"
+      ]
+    },
+    "satyaa_ai": {
+      "status": "Product proposition described in supplied Sentientia materials",
+      "summary": "Sentientia's proprietary AI automation and compliance engine for transforming static content into more interactive and personalized learning journeys.",
+      "described_capabilities": [
+        "Auto-tagging and AI summarization",
+        "Quiz, learning-path, and voiceover generation",
+        "Natural voiceovers in 30+ languages",
+        "Real-time learner support through chat",
+        "Potential use as a compliance assistant or learning chatbot"
+      ],
+      "qualification": "Availability and configuration for a specific customer must be confirmed with Sentientia."
+    },
+    "rxready_ai": {
+      "status": "Proposed client solution and pilot concept in the supplied pitch deck",
+      "summary": "A proposed pharma field-force role-play and coaching solution that demonstrates how Sentientia's Nudge AI platform can be configured for a specific industry and performance use case.",
+      "proposed_experience": [
+        "Select a brand, therapy area, scenario, and healthcare-professional persona",
+        "Practice through a two-way voice or text role-play",
+        "Encounter adaptive objections and follow-up questions",
+        "Receive feedback on clinical accuracy, objection handling, tone, confidence, and compliant language",
+        "Provide managers with readiness, practice, score, and improvement visibility"
+      ],
+      "proposed_foundations": [
+        "Google Gemini conversational models",
+        "Google Cloud infrastructure",
+        "Responsive web and potential WhatsApp delivery",
+        "Brand-governed content and role-based access"
+      ],
+      "qualification": "RxReady AI is presented as a proposed engagement and pilot path. Illustrative dashboard values and scenario claims are not production results or commitments."
+    }
+  },
+  "publisher_and_content_services": {
+    "content_aggregation": "Sentientia materials describe rights-compliant distribution of eBooks, SCORM courses, and microlearning modules across corporate, institutional, and government channels.",
+    "documented_scale_claims": [
+      "Supplied materials state distribution of 5,000+ titles across Europe, Asia Pacific, the Middle East, and the United States.",
+      "Supplied capability materials state 1,000+ courses delivered and experience producing libraries ranging from standalone modules to 500-course programs."
+    ],
+    "services": [
+      "Higher education and ELT conversion",
+      "Compliance and technical modules",
+      "Instructional design and visual storyboarding",
+      "Animation, video, simulation, and gamified learning",
+      "AI narration and multilingual production",
+      "Digital academies and publisher enablement"
+    ]
+  },
+  "recommended_discovery_questions": [
+    "Who needs to learn: employees, customers, partners, field teams, or a regulated workforce?",
+    "What business outcome or performance gap should the program address?",
+    "Is the requirement primarily content, platform, localization, AI enablement, or a connected solution?",
+    "Which languages, regions, channels, integrations, and reporting requirements matter?",
+    "What content already exists, and what must be created or transformed?",
+    "What scale, rollout window, governance, security, and compliance constraints apply?"
+  ],
+  "suggested_faqs": [
+    {
+      "question": "What does Sentientia do?",
+      "answer": "Sentientia designs enterprise learning systems that combine custom content, localization, learning platforms, digital academies, and governed AI."
+    },
+    {
+      "question": "Can Sentientia provide both content and an LMS?",
+      "answer": "Yes. Sentientia's connected model covers instructional design and content production as well as LMS, LXP, academy, localization, AI, and analytics services. Final scope is defined through discovery."
+    },
+    {
+      "question": "What is the difference between BlueTree LMS and the Nudge AI platform?",
+      "answer": "BlueTree is Sentientia's enterprise LMS for structured and blended learning. Nudge is Sentientia's AI learning platform for intelligent coaching, reinforcement, and knowledge support in the flow of work, with a current WhatsApp-native experience."
+    },
+    {
+      "question": "Can Sentientia support multilingual learning?",
+      "answer": "Yes. Sentientia supports multilingual content and platform experiences, including translation, cultural adaptation, voiceover, subtitles, and regional delivery. The public website cites 15+ languages."
+    },
+    {
+      "question": "How do we start?",
+      "answer": "Begin with a discovery conversation covering the audience, business outcome, existing content, delivery channels, languages, integrations, governance, scale, and rollout expectations."
+    }
+  ],
+  "source_register": [
+    "Sentientia official website, accessed 9 August 2026",
+    "BlueTree LMS Feature Matrix",
+    "BlueTree LMS overview deck",
+    "Nudge LMS WhatsApp-native learning deck",
+    "Nudge LMS customer overview and product roadmap",
+    "RxReady AI pitch deck",
+    "Sentientia capability, AI 2026, training-module, and BlueTree feature extracts supplied in chatling 1.txt"
+  ]
+}

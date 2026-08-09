@@ -1,0 +1,10 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.firebase/
+firebase-debug.log
+tmp/
+frontend/assets/sentientia-ai-mascot-chroma.png
+frontend/assets/sentientia-ai-mascot-male-chroma.png
+frontend/assets/sentientia-ai-mascot.png
