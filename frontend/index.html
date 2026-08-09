@@ -151,7 +151,7 @@
           if (headBone) headBaseRotation = headBone.rotation.clone();
           if (gltf.animations.length) {
             const bodyTracks = gltf.animations[0].tracks.filter((track) =>
-              !/Head|Eye|Head_Mesh|EyeAO|Eyelash|Teeth|Tongue/i.test(track.name),
+              !/Hips|Head|Eye|Head_Mesh|EyeAO|Eyelash|Teeth|Tongue/i.test(track.name),
             );
             if (bodyTracks.length) {
               const bodyClip = new THREE.AnimationClip("body_idle", gltf.animations[0].duration, bodyTracks);
