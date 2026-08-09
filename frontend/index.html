@@ -194,6 +194,7 @@
       let voicePaused = false;
       let speechTimer = null;
       let isSpeaking = false;
+      let activeSpeechAudio = null;
       let nextBlink = 1.5;
       let blinkStarted = -1;
 
@@ -261,8 +262,8 @@
         speechTimer = setTimeout(() => { isSpeaking = false; }, Math.max(1200, text.length * 55));
       }
 
-      function speakReply(text) {
-        if (!voiceEnabled || !("speechSynthesis" in window)) {
+      function speakWithBrowser(text) {
+        if (!("speechSynthesis" in window)) {
           animateSpeech(text);
           return;
         }
@@ -284,6 +285,37 @@
           || voices.find((voice) => voice.lang.startsWith("en"))
           || null;
         speechSynthesis.speak(utterance);
+      }
+
+      async function speakReply(text) {
+        if (!voiceEnabled) return;
+        speechSynthesis?.cancel();
+        activeSpeechAudio?.pause();
+        activeSpeechAudio = null;
+        voicePaused = false;
+        voiceStatus.textContent = "Generating Indian voice…";
+        try {
+          const ttsUrl = window.APP_CONFIG?.TTS_BASE_URL?.replace(/\/$/, "");
+          if (!ttsUrl) throw new Error("TTS URL is missing");
+          const response = await fetch(`${ttsUrl}/speak`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text }),
+          });
+          if (!response.ok) throw new Error(`TTS failed (${response.status})`);
+          const objectUrl = URL.createObjectURL(await response.blob());
+          const audio = new Audio(objectUrl);
+          activeSpeechAudio = audio;
+          await window.attachAvatarAudio(audio);
+          audio.onplay = () => { isSpeaking = true; voiceStatus.textContent = "Indian English voice"; updatePauseButton(true); };
+          audio.onended = () => { isSpeaking = false; mouthLevel = 0; activeSpeechAudio = null; updatePauseButton(false); URL.revokeObjectURL(objectUrl); };
+          audio.onerror = () => { URL.revokeObjectURL(objectUrl); activeSpeechAudio = null; speakWithBrowser(text); };
+          await audio.play();
+        } catch (error) {
+          console.warn("Dedicated TTS unavailable; using browser voice", error);
+          voiceStatus.textContent = "Browser voice fallback";
+          speakWithBrowser(text);
+        }
       }
 
       async function sendPrompt(prompt) {
@@ -346,34 +378,35 @@
         pauseVoice.textContent = voicePaused ? "▶ Resume" : "⏸ Pause";
       }
       if (!("speechSynthesis" in window)) {
-        voiceEnabled = false;
-        voiceToggle.disabled = true;
-        voiceToggle.textContent = "🔇 Voice unavailable";
-        voiceStatus.textContent = "Use Chrome or Edge for browser speech";
+        voiceStatus.textContent = "Indian English voice";
       }
       voiceToggle.addEventListener("click", () => {
         voiceEnabled = !voiceEnabled;
         voiceToggle.setAttribute("aria-pressed", String(voiceEnabled));
         voiceToggle.textContent = voiceEnabled ? "🔊 Voice on" : "🔇 Voice off";
-        voiceStatus.textContent = voiceEnabled ? "Browser voice" : "Muted";
+        voiceStatus.textContent = voiceEnabled ? "Indian English voice" : "Muted";
         if (!voiceEnabled) {
           isSpeaking = false;
           voicePaused = false;
           updatePauseButton(false);
+          activeSpeechAudio?.pause();
+          activeSpeechAudio = null;
           speechSynthesis.cancel();
         }
       });
       pauseVoice.addEventListener("click", () => {
-        if (!speechSynthesis.speaking && !speechSynthesis.paused) return;
+        if (!activeSpeechAudio && !speechSynthesis.speaking && !speechSynthesis.paused) return;
         voicePaused = !voicePaused;
         if (voicePaused) {
-          speechSynthesis.pause();
+          if (activeSpeechAudio) activeSpeechAudio.pause();
+          else speechSynthesis.pause();
           isSpeaking = false;
           voiceStatus.textContent = "Speech paused";
         } else {
-          speechSynthesis.resume();
+          if (activeSpeechAudio) activeSpeechAudio.play();
+          else speechSynthesis.resume();
           isSpeaking = true;
-          voiceStatus.textContent = "Browser voice";
+          voiceStatus.textContent = activeSpeechAudio ? "Indian English voice" : "Browser voice";
         }
         updatePauseButton(true);
       });
@@ -390,6 +423,8 @@
           isSpeaking = false;
           voicePaused = false;
           updatePauseButton(false);
+          activeSpeechAudio?.pause();
+          activeSpeechAudio = null;
           speechSynthesis?.cancel();
           finalTranscript = "";
           recognition.start();
