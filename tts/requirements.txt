@@ -1,0 +1,5 @@
+fastapi==0.116.1
+uvicorn==0.35.0
+pydantic==2.11.7
+git+https://github.com/myshell-ai/MeloTTS.git@abf885acf7c8322af07e6584099748cba09e3909
+
