@@ -66,6 +66,7 @@
         </form>
         <div class="controls">
           <button id="voice-toggle" type="button" aria-pressed="true">🔊 Voice on</button>
+          <button id="pause-voice" type="button" aria-pressed="false" disabled>⏸ Pause</button>
           <span id="voice-status">Browser voice</span>
         </div>
         <div id="reply" role="status" aria-live="polite">Ready when you are.</div>
@@ -188,6 +189,7 @@
       let analyser = null;
       let frequencyData = null;
       let voiceEnabled = true;
+      let voicePaused = false;
       let speechTimer = null;
       let isSpeaking = false;
       let nextBlink = 1.5;
@@ -279,13 +281,15 @@
           return;
         }
         speechSynthesis.cancel();
+        voicePaused = false;
+        updatePauseButton(true);
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = "en-IN";
         utterance.rate = 0.9;
         utterance.pitch = 0.92;
         utterance.onstart = () => { clearTimeout(speechTimer); isSpeaking = true; };
-        utterance.onend = () => { isSpeaking = false; mouthLevel = 0; };
-        utterance.onerror = () => { isSpeaking = false; mouthLevel = 0; };
+        utterance.onend = () => { isSpeaking = false; mouthLevel = 0; updatePauseButton(false); };
+        utterance.onerror = () => { isSpeaking = false; mouthLevel = 0; updatePauseButton(false); };
         const voices = speechSynthesis.getVoices();
         utterance.voice = voices.find((voice) => /^en[-_]IN$/i.test(voice.lang) && /natural|google|microsoft|heera|neerja|ravi/i.test(voice.name))
           || voices.find((voice) => /^en[-_]IN$/i.test(voice.lang))
@@ -348,7 +352,13 @@
       });
 
       const voiceToggle = document.querySelector("#voice-toggle");
+      const pauseVoice = document.querySelector("#pause-voice");
       const voiceStatus = document.querySelector("#voice-status");
+      function updatePauseButton(active) {
+        pauseVoice.disabled = !active;
+        pauseVoice.setAttribute("aria-pressed", String(voicePaused));
+        pauseVoice.textContent = voicePaused ? "▶ Resume" : "⏸ Pause";
+      }
       if (!("speechSynthesis" in window)) {
         voiceEnabled = false;
         voiceToggle.disabled = true;
@@ -362,8 +372,24 @@
         voiceStatus.textContent = voiceEnabled ? "Browser voice" : "Muted";
         if (!voiceEnabled) {
           isSpeaking = false;
+          voicePaused = false;
+          updatePauseButton(false);
           speechSynthesis.cancel();
         }
+      });
+      pauseVoice.addEventListener("click", () => {
+        if (!speechSynthesis.speaking && !speechSynthesis.paused) return;
+        voicePaused = !voicePaused;
+        if (voicePaused) {
+          speechSynthesis.pause();
+          isSpeaking = false;
+          voiceStatus.textContent = "Speech paused";
+        } else {
+          speechSynthesis.resume();
+          isSpeaking = true;
+          voiceStatus.textContent = "Browser voice";
+        }
+        updatePauseButton(true);
       });
 
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -376,6 +402,8 @@
 
         mic.addEventListener("click", () => {
           isSpeaking = false;
+          voicePaused = false;
+          updatePauseButton(false);
           speechSynthesis?.cancel();
           finalTranscript = "";
           recognition.start();
