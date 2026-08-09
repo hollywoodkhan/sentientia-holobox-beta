@@ -106,7 +106,9 @@
 
       const avatar = new THREE.Group();
       scene.add(avatar);
+      const clock = new THREE.Clock();
       const facialMeshes = [];
+      let mixer = null;
       let headBone = null;
       let headBaseRotation = null;
 
@@ -142,6 +144,16 @@
           model.position.set(-center.x * scale, -box.min.y * scale - 1.65, -center.z * scale);
           avatar.rotation.y = 0;
           if (headBone) headBaseRotation = headBone.rotation.clone();
+          if (gltf.animations.length) {
+            const bodyTracks = gltf.animations[0].tracks.filter((track) =>
+              !/Head|Eye|Head_Mesh|EyeAO|Eyelash|Teeth|Tongue/i.test(track.name),
+            );
+            if (bodyTracks.length) {
+              const bodyClip = new THREE.AnimationClip("body_idle", gltf.animations[0].duration, bodyTracks);
+              mixer = new THREE.AnimationMixer(model);
+              mixer.clipAction(bodyClip).play();
+            }
+          }
           document.querySelector("#status").textContent = "Sentientia AI online";
       }
 
@@ -191,6 +203,7 @@
 
       function animate(time) {
         requestAnimationFrame(animate);
+        mixer?.update(Math.min(clock.getDelta(), 0.05));
         if (analyser) {
           analyser.getByteFrequencyData(frequencyData);
           mouthLevel = frequencyData.reduce((sum, value) => sum + value, 0) / frequencyData.length / 255;
@@ -203,6 +216,8 @@
         const speechOpen = THREE.MathUtils.clamp(mouthLevel * 0.72, 0, 0.46);
         setMorph("jawOpen", speechOpen);
         setMorph("mouthOpen", 0);
+        setMorph("mouthClose", Math.max(0, 0.09 - speechOpen * 0.5));
+        setMorph("mouthSmile", Math.max(0, 0.035 - speechOpen * 0.08));
         setMorph("viseme_aa", speechOpen * (0.2 + 0.22 * Math.max(0, Math.sin(time * 0.011))));
         setMorph("viseme_E", speechOpen * 0.16 * Math.max(0, Math.sin(time * 0.013 + 2)));
         setMorph("viseme_O", speechOpen * 0.18 * Math.max(0, Math.sin(time * 0.009 + 4)));
@@ -247,13 +262,17 @@
         }
         speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 0.96;
-        utterance.pitch = 1;
+        utterance.lang = "en-IN";
+        utterance.rate = 0.9;
+        utterance.pitch = 0.92;
         utterance.onstart = () => { clearTimeout(speechTimer); isSpeaking = true; };
         utterance.onend = () => { isSpeaking = false; mouthLevel = 0; };
         utterance.onerror = () => { isSpeaking = false; mouthLevel = 0; };
         const voices = speechSynthesis.getVoices();
-        utterance.voice = voices.find((voice) => voice.lang.startsWith("en") && /natural|google|microsoft/i.test(voice.name))
+        utterance.voice = voices.find((voice) => /^en[-_]IN$/i.test(voice.lang) && /natural|google|microsoft|heera|neerja|ravi/i.test(voice.name))
+          || voices.find((voice) => /^en[-_]IN$/i.test(voice.lang))
+          || voices.find((voice) => /^en[-_]GB$/i.test(voice.lang) && /natural|google|microsoft/i.test(voice.name))
+          || voices.find((voice) => voice.lang.startsWith("en") && /natural|google|microsoft/i.test(voice.name))
           || voices.find((voice) => voice.lang.startsWith("en"))
           || null;
         speechSynthesis.speak(utterance);
