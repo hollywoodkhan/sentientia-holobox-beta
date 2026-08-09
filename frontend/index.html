@@ -35,11 +35,9 @@
       .suggestions button { min-height: 34px; padding: 7px 11px; background: transparent; color: #315c3e; border: 1px solid #174b2a26; font-size: .78rem; font-weight: 600; }
       .brand { position: absolute; z-index: 4; left: 24px; bottom: 22px; display: flex; align-items: center; gap: 10px; color: #dfffd5; letter-spacing: .12em; text-transform: uppercase; font-weight: 800; font-size: .74rem; }
       .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; color: #092013; background: #78df54; font-size: 1rem; }
-      .mascot { position: absolute; z-index: 2; inset: auto; left: 50%; bottom: -5%; translate: -50% 0; width: auto; height: min(94vh, 900px); max-width: 92%; filter: drop-shadow(0 28px 45px #0009); transform-origin: 50% 78%; animation: breathe 4s ease-in-out infinite; pointer-events: none; }
       .voice-bars { position: absolute; z-index: 3; left: 50%; bottom: 6%; translate: -50% 0; display: flex; align-items: end; gap: 5px; height: 30px; padding: 8px 12px; border-radius: 999px; background: #071711bb; backdrop-filter: blur(12px); }
       .voice-bars i { display: block; width: 3px; height: 5px; background: #7ee25a; border-radius: 3px; transition: height .1s; }
       canvas { position: absolute; inset: 0; z-index: 0; display: block; }
-      @keyframes breathe { 50% { transform: translateY(-7px) scale(1.006); } }
       @media (max-width: 780px) { main { grid-template-columns: 1fr; } aside { border-left: 0; border-top: 1px solid #ffffff14; } }
     </style>
   </head>
@@ -47,7 +45,6 @@
     <main>
       <section id="stage" aria-label="Sentientia AI avatar">
         <div id="status">Sentientia AI online</div>
-        <canvas class="mascot" id="mascot-canvas" role="img" aria-label="Sentientia male AI learning advisor"></canvas>
         <div class="voice-bars" aria-hidden="true"><i style="--bar:.5"></i><i style="--bar:1"></i><i style="--bar:.7"></i><i style="--bar:1.2"></i><i style="--bar:.6"></i></div>
         <div class="brand"><span class="brand-mark">S</span><span>Sentientia · Intelligent Learning</span></div>
       </section>
@@ -76,40 +73,20 @@
 
     <script src="./config.js"></script>
     <script type="importmap">
-      { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js" } }
+      { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/" } }
     </script>
     <script type="module">
       import * as THREE from "three";
+      import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
       const stage = document.querySelector("#stage");
-      const mascotCanvas = document.querySelector("#mascot-canvas");
-      const mascotContext = mascotCanvas.getContext("2d", { willReadFrequently: true });
-      const mascotImage = new Image();
-      mascotImage.src = "./assets/sentientia-ai-mascot-male-v2-chroma.png";
-      mascotImage.addEventListener("load", () => {
-        mascotCanvas.width = mascotImage.naturalWidth;
-        mascotCanvas.height = mascotImage.naturalHeight;
-        mascotContext.drawImage(mascotImage, 0, 0);
-        const frame = mascotContext.getImageData(0, 0, mascotCanvas.width, mascotCanvas.height);
-        const pixels = frame.data;
-        for (let index = 0; index < pixels.length; index += 4) {
-          const red = pixels[index];
-          const green = pixels[index + 1];
-          const blue = pixels[index + 2];
-          const keyStrength = Math.min(red - green, blue - green);
-          if (red > 165 && blue > 145 && green < 125 && keyStrength > 55) {
-            pixels[index + 3] = Math.max(0, 255 - (keyStrength - 55) * 2.4);
-          }
-        }
-        mascotContext.putImageData(frame, 0, 0);
-      });
 
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(0x071711);
       scene.fog = new THREE.Fog(0x071711, 5, 13);
 
       const camera = new THREE.PerspectiveCamera(40, stage.clientWidth / stage.clientHeight, 0.1, 100);
-      camera.position.set(0, 0.25, 5.4);
+      camera.position.set(0, 1.35, 3.4);
 
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -125,34 +102,63 @@
       rim.position.set(-3, 1, 2);
       scene.add(rim);
 
-      // Procedural placeholder avatar. Replace this group with a GLTF scene later.
       const avatar = new THREE.Group();
-      const suit = new THREE.MeshStandardMaterial({ color: 0x172f4b, roughness: 0.55, metalness: 0.15 });
-      const skin = new THREE.MeshStandardMaterial({ color: 0xdca17d, roughness: 0.7 });
-      const dark = new THREE.MeshStandardMaterial({ color: 0x07101a, roughness: 0.5 });
-      const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.9, 1.25, 8, 24), suit);
-      torso.position.y = -1.2;
-      avatar.add(torso);
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.72, 48, 48), skin);
-      head.scale.set(0.86, 1.08, 0.92);
-      head.position.y = 0.48;
-      avatar.add(head);
-      const jawPivot = new THREE.Group();
-      jawPivot.position.set(0, 0.25, 0.64);
-      const mouth = new THREE.Mesh(new THREE.CapsuleGeometry(0.13, 0.18, 4, 12), dark);
-      mouth.rotation.z = Math.PI / 2;
-      mouth.scale.y = 0.18;
-      jawPivot.add(mouth);
-      avatar.add(jawPivot);
-      avatar.rotation.y = -0.08;
       scene.add(avatar);
-      avatar.visible = false;
+      const clock = new THREE.Clock();
+      const facialMeshes = [];
+      let mixer = null;
+      let headBone = null;
+
+      function setMorph(name, value) {
+        facialMeshes.forEach((mesh) => {
+          const index = mesh.morphTargetDictionary?.[name];
+          if (index !== undefined) mesh.morphTargetInfluences[index] = value;
+        });
+      }
+
+      new GLTFLoader().load(
+        "./assets/sentientia-avatar.glb",
+        (gltf) => {
+          const model = gltf.scene;
+          avatar.add(model);
+          model.traverse((object) => {
+            object.frustumCulled = false;
+            if (object.isMesh) {
+              object.castShadow = true;
+              object.receiveShadow = true;
+              if (object.morphTargetDictionary) facialMeshes.push(object);
+            }
+            if (object.isBone && object.name === "Head") headBone = object;
+          });
+
+          const box = new THREE.Box3().setFromObject(model);
+          const size = box.getSize(new THREE.Vector3());
+          const center = box.getCenter(new THREE.Vector3());
+          const scale = 3.15 / size.y;
+          model.scale.setScalar(scale);
+          model.position.set(-center.x * scale, -box.min.y * scale - 1.65, -center.z * scale);
+          avatar.rotation.y = -0.06;
+
+          if (gltf.animations.length) {
+            mixer = new THREE.AnimationMixer(model);
+            mixer.clipAction(gltf.animations[0]).play();
+          }
+          document.querySelector("#status").textContent = "Sentientia AI online";
+        },
+        undefined,
+        (error) => {
+          console.error("Avatar model failed to load", error);
+          document.querySelector("#status").textContent = "Avatar unavailable";
+        },
+      );
 
       let mouthLevel = 0;
       let analyser = null;
       let frequencyData = null;
       let voiceEnabled = true;
       let speechTimer = null;
+      let nextBlink = 1.5;
+      let blinkStarted = -1;
 
       // Blueprint for real audio: pass an HTMLAudioElement containing TTS audio.
       window.attachAvatarAudio = (audioElement) => {
@@ -168,18 +174,38 @@
 
       function animate(time) {
         requestAnimationFrame(animate);
+        const delta = Math.min(clock.getDelta(), 0.05);
+        mixer?.update(delta);
         if (analyser) {
           analyser.getByteFrequencyData(frequencyData);
           mouthLevel = frequencyData.reduce((sum, value) => sum + value, 0) / frequencyData.length / 255;
         }
-        mouth.scale.y = THREE.MathUtils.lerp(mouth.scale.y, 0.18 + mouthLevel * 2.1, 0.3);
+        const speechOpen = THREE.MathUtils.clamp(mouthLevel * 1.35, 0, 0.9);
+        setMorph("jawOpen", speechOpen);
+        setMorph("mouthOpen", speechOpen * 0.72);
+        setMorph("viseme_aa", speechOpen * 0.42);
         stage.style.setProperty("--voice-level", mouthLevel.toFixed(3));
         document.querySelectorAll(".voice-bars i").forEach((bar) => {
           const variation = Number.parseFloat(bar.style.getPropertyValue("--bar")) || 1;
           bar.style.height = `${5 + mouthLevel * variation * 22}px`;
         });
-        head.rotation.y = Math.sin(time * 0.00045) * 0.055;
-        avatar.position.y = Math.sin(time * 0.0012) * 0.025;
+        if (headBone) {
+          headBone.rotation.y += (Math.sin(time * 0.00042) * 0.035 - headBone.rotation.y) * 0.025;
+          headBone.rotation.z += (Math.sin(time * 0.00031) * 0.012 - headBone.rotation.z) * 0.025;
+        }
+        const seconds = time / 1000;
+        if (blinkStarted < 0 && seconds > nextBlink) blinkStarted = seconds;
+        if (blinkStarted >= 0) {
+          const phase = (seconds - blinkStarted) / 0.18;
+          const blink = phase < 1 ? Math.sin(phase * Math.PI) : 0;
+          setMorph("eyeBlinkLeft", blink);
+          setMorph("eyeBlinkRight", blink);
+          if (phase >= 1) {
+            blinkStarted = -1;
+            nextBlink = seconds + 2.2 + Math.random() * 3.8;
+          }
+        }
+        avatar.position.y = Math.sin(time * 0.0011) * 0.012;
         renderer.render(scene, camera);
       }
       requestAnimationFrame(animate);
