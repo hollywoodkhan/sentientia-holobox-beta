@@ -106,10 +106,9 @@
 
       const avatar = new THREE.Group();
       scene.add(avatar);
-      const clock = new THREE.Clock();
       const facialMeshes = [];
-      let mixer = null;
       let headBone = null;
+      let headBaseRotation = null;
 
       function setMorph(name, value) {
         facialMeshes.forEach((mesh) => {
@@ -127,7 +126,10 @@
             if (object.isMesh) {
               object.castShadow = true;
               object.receiveShadow = true;
-              if (object.morphTargetDictionary) facialMeshes.push(object);
+              if (object.morphTargetDictionary) {
+                facialMeshes.push(object);
+                object.morphTargetInfluences.fill(0);
+              }
             }
             if (object.isBone && object.name === "Head") headBone = object;
           });
@@ -138,12 +140,8 @@
           const scale = 3.15 / size.y;
           model.scale.setScalar(scale);
           model.position.set(-center.x * scale, -box.min.y * scale - 1.65, -center.z * scale);
-          avatar.rotation.y = -0.06;
-
-          if (gltf.animations.length) {
-            mixer = new THREE.AnimationMixer(model);
-            mixer.clipAction(gltf.animations[0]).play();
-          }
+          avatar.rotation.y = 0;
+          if (headBone) headBaseRotation = headBone.rotation.clone();
           document.querySelector("#status").textContent = "Sentientia AI online";
       }
 
@@ -175,6 +173,7 @@
       let frequencyData = null;
       let voiceEnabled = true;
       let speechTimer = null;
+      let isSpeaking = false;
       let nextBlink = 1.5;
       let blinkStarted = -1;
 
@@ -192,24 +191,31 @@
 
       function animate(time) {
         requestAnimationFrame(animate);
-        const delta = Math.min(clock.getDelta(), 0.05);
-        mixer?.update(delta);
         if (analyser) {
           analyser.getByteFrequencyData(frequencyData);
           mouthLevel = frequencyData.reduce((sum, value) => sum + value, 0) / frequencyData.length / 255;
+        } else if (isSpeaking) {
+          const syllable = Math.abs(Math.sin(time * 0.017) * 0.62 + Math.sin(time * 0.029) * 0.28);
+          mouthLevel = THREE.MathUtils.lerp(mouthLevel, 0.12 + syllable * 0.48, 0.42);
+        } else {
+          mouthLevel = THREE.MathUtils.lerp(mouthLevel, 0, 0.28);
         }
-        const speechOpen = THREE.MathUtils.clamp(mouthLevel * 1.35, 0, 0.9);
+        const speechOpen = THREE.MathUtils.clamp(mouthLevel * 0.72, 0, 0.46);
         setMorph("jawOpen", speechOpen);
-        setMorph("mouthOpen", speechOpen * 0.72);
-        setMorph("viseme_aa", speechOpen * 0.42);
+        setMorph("mouthOpen", 0);
+        setMorph("viseme_aa", speechOpen * (0.2 + 0.22 * Math.max(0, Math.sin(time * 0.011))));
+        setMorph("viseme_E", speechOpen * 0.16 * Math.max(0, Math.sin(time * 0.013 + 2)));
+        setMorph("viseme_O", speechOpen * 0.18 * Math.max(0, Math.sin(time * 0.009 + 4)));
         stage.style.setProperty("--voice-level", mouthLevel.toFixed(3));
         document.querySelectorAll(".voice-bars i").forEach((bar) => {
           const variation = Number.parseFloat(bar.style.getPropertyValue("--bar")) || 1;
           bar.style.height = `${5 + mouthLevel * variation * 22}px`;
         });
-        if (headBone) {
-          headBone.rotation.y += (Math.sin(time * 0.00042) * 0.035 - headBone.rotation.y) * 0.025;
-          headBone.rotation.z += (Math.sin(time * 0.00031) * 0.012 - headBone.rotation.z) * 0.025;
+        if (headBone && headBaseRotation) {
+          const targetY = headBaseRotation.y + Math.sin(time * 0.00042) * 0.018;
+          const targetZ = headBaseRotation.z + Math.sin(time * 0.00031) * 0.006;
+          headBone.rotation.y += (targetY - headBone.rotation.y) * 0.025;
+          headBone.rotation.z += (targetZ - headBone.rotation.z) * 0.025;
         }
         const seconds = time / 1000;
         if (blinkStarted < 0 && seconds > nextBlink) blinkStarted = seconds;
@@ -229,17 +235,9 @@
       requestAnimationFrame(animate);
 
       function animateSpeech(text) {
-        // Visual fallback for text-only replies; replace with attachAvatarAudio for TTS.
-        const duration = Math.min(9000, Math.max(1200, text.length * 38));
-        const started = performance.now();
-        clearInterval(speechTimer);
-        speechTimer = setInterval(() => {
-          mouthLevel = 0.2 + Math.random() * 0.55;
-          if (performance.now() - started > duration) {
-            clearInterval(speechTimer);
-            mouthLevel = 0;
-          }
-        }, 90);
+        isSpeaking = true;
+        clearTimeout(speechTimer);
+        speechTimer = setTimeout(() => { isSpeaking = false; }, Math.max(1200, text.length * 55));
       }
 
       function speakReply(text) {
@@ -251,9 +249,9 @@
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.rate = 0.96;
         utterance.pitch = 1;
-        utterance.onstart = () => animateSpeech(text);
-        utterance.onend = () => { clearInterval(speechTimer); mouthLevel = 0; };
-        utterance.onerror = () => { clearInterval(speechTimer); mouthLevel = 0; };
+        utterance.onstart = () => { clearTimeout(speechTimer); isSpeaking = true; };
+        utterance.onend = () => { isSpeaking = false; mouthLevel = 0; };
+        utterance.onerror = () => { isSpeaking = false; mouthLevel = 0; };
         const voices = speechSynthesis.getVoices();
         utterance.voice = voices.find((voice) => voice.lang.startsWith("en") && /natural|google|microsoft/i.test(voice.name))
           || voices.find((voice) => voice.lang.startsWith("en"))
@@ -325,7 +323,10 @@
         voiceToggle.setAttribute("aria-pressed", String(voiceEnabled));
         voiceToggle.textContent = voiceEnabled ? "🔊 Voice on" : "🔇 Voice off";
         voiceStatus.textContent = voiceEnabled ? "Browser voice" : "Muted";
-        if (!voiceEnabled) speechSynthesis.cancel();
+        if (!voiceEnabled) {
+          isSpeaking = false;
+          speechSynthesis.cancel();
+        }
       });
 
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -337,6 +338,7 @@
         let finalTranscript = "";
 
         mic.addEventListener("click", () => {
+          isSpeaking = false;
           speechSynthesis?.cancel();
           finalTranscript = "";
           recognition.start();
