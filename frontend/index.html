@@ -156,7 +156,8 @@
         status.title = `3D model error: ${message}`;
       }
 
-      const avatarUrl = "./assets/sentientia-avatar.glb?v=20260810-3";
+      // The neutral extension avoids corporate/browser filters that block .glb downloads.
+      const avatarUrl = "./assets/sentientia-avatar.bin?v=20260810-4";
       avatarLoader.load(avatarUrl, mountAvatar, undefined, async (firstError) => {
         console.warn("Direct GLB load failed; retrying from memory", firstError);
         try {
