@@ -239,21 +239,6 @@
           const variation = Number.parseFloat(bar.style.getPropertyValue("--bar")) || 1;
           bar.style.height = `${5 + mouthLevel * variation * 22}px`;
         });
-        if (headBone && headBaseRotation) {
-          const targetY = headBaseRotation.y + Math.sin(time * 0.00042) * 0.018;
-          const targetZ = headBaseRotation.z + Math.sin(time * 0.00031) * 0.006;
-          headBone.rotation.y += (targetY - headBone.rotation.y) * 0.025;
-          headBone.rotation.z += (targetZ - headBone.rotation.z) * 0.025;
-        }
-        const gesture = isSpeaking ? 1 : 0.35;
-        if (bodyBones.Spine) bodyBones.Spine.rotation.z += Math.sin(time * 0.0011) * 0.012;
-        if (bodyBones.Spine1) bodyBones.Spine1.rotation.y += Math.sin(time * 0.00073) * 0.018 * gesture;
-        if (bodyBones.Spine2) bodyBones.Spine2.rotation.x += Math.sin(time * 0.00145) * 0.009;
-        if (bodyBones.Neck) bodyBones.Neck.rotation.y += Math.sin(time * 0.00082) * 0.014;
-        if (bodyBones.LeftShoulder) bodyBones.LeftShoulder.rotation.z += Math.sin(time * 0.0017) * 0.012 * gesture;
-        if (bodyBones.RightShoulder) bodyBones.RightShoulder.rotation.z -= Math.sin(time * 0.0017 + 0.8) * 0.012 * gesture;
-        if (isSpeaking && bodyBones.LeftArm) bodyBones.LeftArm.rotation.x += Math.sin(time * 0.0021) * 0.022;
-        if (isSpeaking && bodyBones.RightArm) bodyBones.RightArm.rotation.x += Math.sin(time * 0.0018 + 1.2) * 0.018;
         const seconds = time / 1000;
         if (blinkStarted < 0 && seconds > nextBlink) blinkStarted = seconds;
         if (blinkStarted >= 0) {
@@ -266,7 +251,6 @@
             nextBlink = seconds + 2.2 + Math.random() * 3.8;
           }
         }
-        avatar.position.y = Math.sin(time * 0.0011) * 0.012;
         renderer.render(scene, camera);
       }
       requestAnimationFrame(animate);
