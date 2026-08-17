@@ -43,6 +43,8 @@ def tokenize(text: str) -> list[str]:
 
 
 def source_label(path: str) -> str:
+    if path.startswith("uploaded_documents."):
+        return "Uploaded knowledge document"
     for prefix, label in SOURCE_LABELS.items():
         if path == prefix or path.startswith(f"{prefix}."):
             return label

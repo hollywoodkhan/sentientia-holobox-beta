@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+  <title>White-label Avatar Admin</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,system-ui,sans-serif;background:#06131b;color:#edf7f8}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0,#173d4d,#06131b 55%)}
+    header{display:flex;justify-content:space-between;padding:18px clamp(18px,4vw,50px);border-bottom:1px solid #244954;background:#071820dc}.brand{font-weight:850}.brand span{color:#f17a50}a{color:#b9d3d8;text-decoration:none}
+    main{width:min(1180px,calc(100% - 28px));margin:28px auto 60px}h1{margin:0 0 7px;font-size:clamp(28px,5vw,42px)}h2{margin:0 0 12px;font-size:19px}p,small{color:#9fb9c0;line-height:1.5}
+    .card{padding:20px;border:1px solid #29505b;border-radius:17px;background:#0b202ae8;box-shadow:0 20px 60px #0004}.auth{margin:22px 0}.auth-row,.row,.toolbar{display:flex;gap:10px;align-items:center}.auth-row input{flex:1}
+    .layout{display:grid;grid-template-columns:270px minmax(0,1fr);gap:18px}.sidebar{align-self:start;position:sticky;top:18px}.workspace{display:grid;gap:18px}.client-list{display:grid;gap:7px;margin:14px 0}.client-button{width:100%;text-align:left;background:#102e39;border:1px solid transparent}.client-button.active{border-color:#65c9be;background:#16414b}
+    label{display:block;margin:13px 0 6px;font-weight:700;font-size:13px}input,textarea,select,button{font:inherit}input,textarea,select{width:100%;padding:11px 12px;border:1px solid #37616d;border-radius:9px;background:#071820;color:#fff;outline:none}textarea{min-height:92px;resize:vertical}input:focus,textarea:focus{border-color:#60c5bb;box-shadow:0 0 0 3px #60c5bb25}
+    button{cursor:pointer;padding:10px 14px;border:0;border-radius:9px;background:#e66b43;color:#fff;font-weight:800}button.secondary{background:#173a46;border:1px solid #37616d}button.danger{background:#653238;padding:7px 10px}button:disabled{opacity:.5;cursor:not-allowed}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}.wide{grid-column:1/-1}.colors{display:grid;grid-template-columns:1fr 1fr;gap:14px}.colors input{height:44px;padding:4px}.status{min-height:22px;margin-top:10px;color:#79d7c7}.error{color:#ff9a83}.hidden{display:none!important}
+    .asset-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.asset{padding:14px;border-radius:12px;background:#102e39}.asset button{margin-top:10px}.docs-head{display:flex;justify-content:space-between;gap:10px;align-items:center}.stats{color:#7cd9cc}.documents{list-style:none;padding:0;margin:12px 0}.documents li{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 3px;border-bottom:1px solid #244550}.empty{padding:25px!important;justify-content:center!important;color:#8ba7ae}.preview{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.new-client{display:grid;gap:8px;margin-top:18px;padding-top:16px;border-top:1px solid #294955}
+    @media(max-width:800px){.layout{grid-template-columns:1fr}.sidebar{position:static}.form-grid,.asset-grid{grid-template-columns:1fr}.wide{grid-column:auto}}
+  </style>
+</head>
+<body>
+<header><div class="brand">AVATAR <span>ADMIN</span></div><a href="/">View default avatar →</a></header>
+<main>
+  <h1>White-label client manager</h1><p>Create branded client demos and manage their isolated knowledge without redeploying.</p>
+  <section class="card auth"><h2>Administrator access</h2><p>Sign in with your authorized Google account. Access is verified by Firebase Authentication and Cloud Run.</p><div class="auth-row"><button id="google-signin">Sign in with Google</button><button id="signout" class="secondary hidden">Sign out</button><strong id="signed-user"></strong></div><div id="auth-status" class="status"></div></section>
+  <div id="dashboard" class="layout hidden">
+    <aside class="card sidebar"><h2>Clients</h2><div id="client-list" class="client-list"></div><div class="new-client"><input id="new-id" placeholder="new-client-id" maxlength="40"><button id="create">Add client</button></div></aside>
+    <div class="workspace">
+      <section class="card"><div class="toolbar"><div><h2>Brand and persona</h2><small id="current-id"></small></div><span style="flex:1"></span><label style="margin:0"><input id="enabled" type="checkbox" style="width:auto"> Enabled</label></div>
+        <div class="form-grid">
+          <div><label>Company name</label><input id="company-name"></div><div><label>Assistant name</label><input id="assistant-name"></div>
+          <div><label>Tagline</label><input id="tagline"></div><div><label>Eyebrow</label><input id="eyebrow"></div>
+          <div class="wide"><label>Headline</label><input id="headline"></div><div class="wide"><label>Description</label><textarea id="description"></textarea></div>
+          <div class="wide"><label>Welcome message</label><input id="welcome"></div>
+          <div><label>Primary colour</label><input id="primary" type="color"></div><div><label>Secondary colour</label><input id="secondary" type="color"></div>
+          <div class="wide"><label>Gemini persona</label><textarea id="persona" placeholder="You are the client's official AI learning advisor..."></textarea></div>
+          <div><label>TTS voice</label><select id="tts-voice"><option>Charon</option><option>Sadaltager</option><option>Orus</option><option>Gacrux</option><option>Achird</option><option>Schedar</option></select></div>
+          <div><label>TTS style</label><input id="tts-style"></div>
+          <div class="wide"><label>Suggested questions — one per line</label><textarea id="questions"></textarea></div>
+        </div>
+        <div class="preview"><button id="save">Save configuration</button><button id="preview" class="secondary">Open preview</button><button id="copy-link" class="secondary">Copy demo link</button><button id="delete-client" class="danger">Delete client</button></div><div id="config-status" class="status"></div>
+      </section>
+      <section class="card"><h2>Brand assets</h2><p>Upload an optional logo and a GLB/VRM avatar. Save the configuration before uploading assets for a new client.</p><div class="asset-grid">
+        <div class="asset"><strong>Logo</strong><small>PNG, JPG, WebP or SVG · 5 MB max</small><input id="logo-file" type="file" accept=".png,.jpg,.jpeg,.webp,.svg"><button data-asset="logo">Upload logo</button></div>
+        <div class="asset"><strong>Avatar</strong><small>GLB, VRM or BIN · 30 MB max</small><input id="avatar-file" type="file" accept=".glb,.vrm,.bin"><button data-asset="avatar">Upload avatar</button></div>
+      </div><div id="asset-status" class="status"></div></section>
+      <section class="card"><div class="docs-head"><div><h2>Knowledge documents</h2><small>Private and isolated to this client</small></div><strong id="doc-stats" class="stats">0 documents</strong></div>
+        <div class="row"><input id="document-file" type="file" accept=".pdf,.txt,.md"><button id="upload-document">Upload and index</button><button id="refresh-docs" class="secondary">Refresh</button></div><div id="doc-status" class="status"></div><ul id="documents" class="documents"></ul>
+      </section>
+    </div>
+  </div>
+</main>
+<script src="config.js"></script>
+<script type="module">
+  import {initializeApp} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+  import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+  const firebaseApp=initializeApp(window.APP_CONFIG.FIREBASE);const auth=getAuth(firebaseApp);const provider=new GoogleAuthProvider();provider.setCustomParameters({prompt:"select_account"});
+  const api=window.APP_CONFIG.API_BASE_URL.replace(/\/$/,""); const $=s=>document.querySelector(s); let clients=[],current=null;
+  async function headers(){const user=auth.currentUser;if(!user)throw new Error("Sign in with Google first");return {Authorization:`Bearer ${await user.getIdToken()}`}}
+  function message(target,text,error=false){const el=$(target);el.textContent=text;el.classList.toggle("error",error)}
+  const fields={company_name:"#company-name",assistant_name:"#assistant-name",tagline:"#tagline",eyebrow:"#eyebrow",headline:"#headline",description:"#description",welcome_message:"#welcome",primary_color:"#primary",secondary_color:"#secondary",persona:"#persona",tts_voice:"#tts-voice",tts_style:"#tts-style"};
+  function demoUrl(){return `${location.origin}/?client=${encodeURIComponent(current.client_id)}`}
+  function readForm(){const data={...current};for(const [key,selector] of Object.entries(fields))data[key]=$(selector).value.trim();data.enabled=$("#enabled").checked;data.suggested_questions=$("#questions").value.split("\n").map(v=>v.trim()).filter(Boolean).slice(0,6);return data}
+  function fillForm(client){current=client;$("#current-id").textContent=client.client_id;for(const [key,selector] of Object.entries(fields))$(selector).value=client[key]||"";$("#enabled").checked=client.enabled!==false;$("#questions").value=(client.suggested_questions||[]).join("\n");$("#delete-client").classList.toggle("hidden",client.client_id==="sentientia");renderClients();loadDocuments()}
+  function renderClients(){const list=$("#client-list");list.replaceChildren();for(const client of clients){const button=document.createElement("button");button.className=`client-button ${current?.client_id===client.client_id?"active":""}`;button.textContent=client.company_name;button.onclick=()=>fillForm(client);list.append(button)}}
+  async function request(url,options={}){options.headers={...(await headers()),...(options.headers||{})};const response=await fetch(api+url,options);const data=await response.json();if(!response.ok)throw new Error(data.detail||`Request failed (${response.status})`);return data}
+  async function loadClients(selectId){const data=await request("/admin/clients");clients=data.clients;$("#dashboard").classList.remove("hidden");const selected=clients.find(c=>c.client_id===(selectId||current?.client_id))||clients[0];fillForm(selected)}
+  async function connect(){message("#auth-status","Opening Google sign-in…");try{await signInWithPopup(auth,provider)}catch(e){message("#auth-status",e.message,true)}}
+  async function saveConfig(){try{const config=readForm();const data=await request(`/admin/clients/${current.client_id}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(config)});message("#config-status","Configuration saved. Public preview updates immediately.");await loadClients(data.client.client_id)}catch(e){message("#config-status",e.message,true)}}
+  async function createClient(){const id=$("#new-id").value.trim().toLowerCase();if(!id)return;const client={...clients.find(c=>c.client_id==="sentientia"),client_id:id,company_name:id.split("-").map(v=>v[0]?.toUpperCase()+v.slice(1)).join(" "),assistant_name:"AI Learning Advisor",tagline:"Intelligent Learning",eyebrow:"AI learning advisor · Client prototype",headline:"Intelligent learning starts here.",description:"Ask our AI learning advisor about our solutions.",welcome_message:"Ready when you are.",persona:`You are ${id}'s official AI learning advisor.`,logo_url:"",avatar_url:"",suggested_questions:["What services do you provide?","Tell me about your learning platform.","How can you support our organization?"],enabled:true};try{current=client;const data=await request(`/admin/clients/${id}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(client)});$("#new-id").value="";await loadClients(data.client.client_id);message("#config-status","New client created.")}catch(e){message("#auth-status",e.message,true)}}
+  async function uploadAsset(kind){const input=$(kind==="logo"?"#logo-file":"#avatar-file");if(!input.files[0])return message("#asset-status",`Choose a ${kind} file first.`,true);const form=new FormData();form.append("file",input.files[0]);try{const data=await request(`/admin/clients/${current.client_id}/assets/${kind}`,{method:"POST",body:form});message("#asset-status",data.message);input.value="";await loadClients(current.client_id)}catch(e){message("#asset-status",e.message,true)}}
+  async function loadDocuments(){if(!current)return;try{const data=await request(`/admin/clients/${current.client_id}/documents`);renderDocuments(data.documents)}catch(e){message("#doc-status",e.message,true)}}
+  function renderDocuments(documents){$("#doc-stats").textContent=`${documents.length} document${documents.length===1?"":"s"}`;const list=$("#documents");list.replaceChildren();if(!documents.length){list.innerHTML='<li class="empty">No uploaded knowledge documents.</li>';return}for(const doc of documents){const item=document.createElement("li");item.innerHTML='<span><strong></strong><br><small></small></span><button class="danger">Delete</button>';item.querySelector("strong").textContent=doc.filename;item.querySelector("small").textContent=`${doc.chunk_count} passages · ${(doc.size/1024).toFixed(1)} KB`;item.querySelector("button").onclick=()=>deleteDocument(doc);list.append(item)}}
+  async function uploadDocument(){const input=$("#document-file");if(!input.files[0])return message("#doc-status","Choose a document first.",true);const form=new FormData();form.append("file",input.files[0]);try{const data=await request(`/admin/clients/${current.client_id}/documents`,{method:"POST",body:form});message("#doc-status",`${data.document.filename} indexed successfully.`);input.value="";await loadDocuments()}catch(e){message("#doc-status",e.message,true)}}
+  async function deleteDocument(doc){if(!confirm(`Delete ${doc.filename} from ${current.company_name}?`))return;try{await request(`/admin/clients/${current.client_id}/documents/${doc.id}`,{method:"DELETE"});message("#doc-status",`${doc.filename} deleted.`);await loadDocuments()}catch(e){message("#doc-status",e.message,true)}}
+  async function deleteClient(){if(current.client_id==="sentientia"||!confirm(`Permanently delete ${current.company_name}, including all documents and assets?`))return;try{await request(`/admin/clients/${current.client_id}`,{method:"DELETE"});message("#auth-status","Client deleted.");current=null;await loadClients("sentientia")}catch(e){message("#config-status",e.message,true)}}
+  $("#google-signin").onclick=connect;$("#signout").onclick=()=>signOut(auth);$("#save").onclick=saveConfig;$("#create").onclick=createClient;$("#delete-client").onclick=deleteClient;$("#preview").onclick=()=>window.open(demoUrl(),"_blank");$("#copy-link").onclick=async()=>{await navigator.clipboard.writeText(demoUrl());message("#config-status","Demo link copied.")};document.querySelectorAll("[data-asset]").forEach(button=>button.onclick=()=>uploadAsset(button.dataset.asset));$("#upload-document").onclick=uploadDocument;$("#refresh-docs").onclick=loadDocuments;
+  onAuthStateChanged(auth,async user=>{if(!user){$("#dashboard").classList.add("hidden");$("#google-signin").classList.remove("hidden");$("#signout").classList.add("hidden");$("#signed-user").textContent="";message("#auth-status","Sign in to manage clients.");return}$("#google-signin").classList.add("hidden");$("#signout").classList.remove("hidden");$("#signed-user").textContent=user.email||"Signed in";message("#auth-status","Verifying administrator access…");try{const identity=await request("/admin/me");await loadClients("sentientia");message("#auth-status",`Signed in securely as ${identity.email}.`)}catch(e){$("#dashboard").classList.add("hidden");message("#auth-status",e.message,true)}});
+</script>
+</body></html>

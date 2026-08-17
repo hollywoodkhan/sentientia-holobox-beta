@@ -22,9 +22,67 @@ backend/
 frontend/
   assets/
   index.html
+  admin.html
   config.js
 firebase.json
 ```
+
+## Upload avatar knowledge
+
+The deployed administrator page is:
+
+```text
+https://sentientia-holobox-beta.web.app/admin.html
+```
+
+Sign in with the approved Google account (`projects@sentientia.com`). The
+browser sends a short-lived Firebase ID token to the backend, where Firebase
+Admin verifies the token, verified email address, and administrator allowlist.
+
+It accepts text-based PDF, TXT, and Markdown files up to 10 MB. Originals and
+extracted passage indexes are stored privately in the bucket configured by
+`KNOWLEDGE_BUCKET`.
+
+The `ADMIN_API_KEY` Secret Manager value remains an emergency CLI/API fallback;
+it is no longer entered into the dashboard. Retrieve it only when emergency
+access is needed:
+
+```powershell
+gcloud secrets versions access latest `
+  --secret=avatar-admin-api-key `
+  --project=gen-lang-client-0089371977
+```
+
+Do not share the emergency key with public demo users. Scanned/image-only PDFs
+must be OCR-processed before upload. Google sign-in must be enabled once in
+Firebase Console under **Authentication > Sign-in method > Google**, with an
+appropriate project support email.
+
+## White-label clients without redeployment
+
+The same Firebase frontend and Cloud Run backend serve multiple isolated client
+demos. Open the admin dashboard, sign in with the administrator account, and use
+**Add client**. Branding, persona, TTS preferences, logo, avatar, and knowledge
+documents are saved in Cloud Storage under the client's namespace.
+
+```text
+tenants/{client-id}/config.json
+tenants/{client-id}/assets/
+tenants/{client-id}/originals/
+tenants/{client-id}/indexes/
+```
+
+Each client receives a link in this form:
+
+```text
+https://sentientia-holobox-beta.web.app/?client={client-id}
+```
+
+Changes saved in the dashboard are available immediately and do not require a
+Firebase or Cloud Run deployment. The `sentientia` client remains the default
+when the `client` query parameter is omitted. Deleting a non-default client from
+the dashboard permanently removes its configuration, uploaded assets, original
+documents, and extracted indexes.
 
 ## Run locally
 
