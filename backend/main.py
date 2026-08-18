@@ -450,7 +450,7 @@ async def live_avatar(websocket: WebSocket, client_id: str) -> None:
                                     if isinstance(data, str):
                                         data = base64.b64decode(data)
                                     await websocket.send_bytes(data)
-                        if content.generation_complete:
+                        if content.turn_complete:
                             await websocket.send_json({"type": "turn_complete"})
                     if response.go_away:
                         await websocket.send_json({
