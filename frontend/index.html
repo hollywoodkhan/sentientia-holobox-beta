@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sentientia AI Learning Advisor</title>
     <style>
-      :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; }
+      :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; --brand-primary:#76dc52; --brand-secondary:#071711; }
       * { box-sizing: border-box; }
-      body { margin: 0; min-height: 100vh; background: #071711; color: #f2fff7; }
+      body { margin: 0; min-height: 100vh; background: var(--brand-secondary); color: #f2fff7; }
       main { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(360px, .8fr); min-height: 100vh; }
       #stage { --voice-level: 0; position: relative; min-height: 58vh; overflow: hidden; background: radial-gradient(circle at 48% 44%, #1d5a3a 0, #0b281c 36%, #04110c 75%); }
       #stage::before { content: ""; position: absolute; z-index: 1; width: min(68vw, 680px); aspect-ratio: 1; left: 50%; top: 52%; translate: -50% -50%; border: 1px solid #8ae55b2c; border-radius: 50%; box-shadow: 0 0 calc(45px + var(--voice-level) * 85px) #75dc5266, inset 0 0 70px #75dc5214; transform: scale(calc(1 + var(--voice-level) * .05)); transition: transform .12s, box-shadow .12s; }
@@ -19,7 +19,7 @@
       form { display: flex; gap: 10px; }
       input { min-width: 0; flex: 1; padding: 14px 16px; border: 1px solid #183f2530; border-radius: 10px; background: white; color: #10271a; font: inherit; outline: none; }
       input:focus { border-color: #78dd55; box-shadow: 0 0 0 3px #78dd5520; }
-      button { border: 0; border-radius: 10px; padding: 0 18px; background: #76dc52; color: #07140b; font-weight: 750; cursor: pointer; }
+      button { border: 0; border-radius: 10px; padding: 0 18px; background: var(--brand-primary); color: #07140b; font-weight: 750; cursor: pointer; }
       button:disabled { opacity: .55; cursor: wait; }
       #mic { width: 48px; flex: 0 0 48px; padding: 0; background: white; color: #174b2a; border: 1px solid #183f2530; font-size: 1.05rem; }
       #mic.listening { background: #ff4d6d; color: white; border-color: #ff7890; animation: pulse 1.1s infinite; }
@@ -30,16 +30,32 @@
       #sources { display: flex; flex-wrap: wrap; gap: 7px; min-height: 0; }
       #sources:empty { display: none; }
       #sources span { padding: 6px 9px; border-radius: 999px; background: #e2f5e6; color: #315c3e; font-size: .72rem; font-weight: 650; }
-      #status { position: absolute; z-index: 2; left: 20px; top: 20px; padding: 7px 11px; background: #071711cc; border: 1px solid #ffffff17; border-radius: 999px; color: #a6f58d; font-size: .78rem; }
+      #status { position: absolute; z-index: 5; left: 20px; top: 20px; padding: 7px 11px; background: #071711cc; border: 1px solid #ffffff17; border-radius: 999px; color: #a6f58d; font-size: .78rem; }
       .suggestions { display: flex; flex-wrap: wrap; gap: 8px; }
       .suggestions button { min-height: 34px; padding: 7px 11px; background: transparent; color: #315c3e; border: 1px solid #174b2a26; font-size: .78rem; font-weight: 600; }
       .brand { position: absolute; z-index: 4; left: 24px; bottom: 22px; display: flex; align-items: center; gap: 10px; color: #dfffd5; letter-spacing: .12em; text-transform: uppercase; font-weight: 800; font-size: .74rem; }
-      .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; color: #092013; background: #78df54; font-size: 1rem; }
+      .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; color: #092013; background: var(--brand-primary); font-size: 1rem; }
       #avatar-fallback { display: none; position: absolute; z-index: 2; left: 50%; bottom: -5%; translate: -50% 0; height: min(94vh, 900px); max-width: 92%; object-fit: contain; filter: drop-shadow(0 28px 45px #0009); pointer-events: none; }
+      #avatar-video { display: none; position: absolute; z-index: 2; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; background: #071711; }
       .voice-bars { position: absolute; z-index: 3; left: 50%; bottom: 6%; translate: -50% 0; display: flex; align-items: end; gap: 5px; height: 30px; padding: 8px 12px; border-radius: 999px; background: #071711bb; backdrop-filter: blur(12px); }
       .voice-bars i { display: block; width: 3px; height: 5px; background: #7ee25a; border-radius: 3px; transition: height .1s; }
       canvas { position: absolute; inset: 0; z-index: 0; display: block; }
-      @media (max-width: 780px) { main { grid-template-columns: 1fr; } aside { border-left: 0; border-top: 1px solid #ffffff14; } }
+      @media (max-width: 780px) {
+        body { overflow: hidden; }
+        main { height: 100dvh; min-height: 0; grid-template-columns: 1fr; grid-template-rows: minmax(260px, 54dvh) minmax(0, 46dvh); }
+        #stage { min-height: 0; }
+        #avatar-video { object-position: center 32%; }
+        #status { left: 12px; top: 12px; }
+        .brand { left: 14px; bottom: 12px; }
+        .voice-bars { right: 12px; left: auto; bottom: 12px; translate: 0; }
+        aside { justify-content: flex-start; gap: 10px; min-height: 0; padding: 14px; overflow-y: auto; border-left: 0; border-top: 1px solid #ffffff14; }
+        aside > .eyebrow, aside > h1, aside > p, .suggestions { display: none; }
+        form { flex: 0 0 48px; }
+        input { padding: 11px 12px; }
+        #reply { min-height: 70px; padding: 12px; }
+        .controls { flex-wrap: wrap; gap: 7px; }
+        .controls button { min-height: 34px; padding: 0 10px; }
+      }
     </style>
   </head>
   <body>
@@ -47,6 +63,7 @@
       <section id="stage" aria-label="Sentientia AI avatar">
         <div id="status">Sentientia AI online</div>
         <img id="avatar-fallback" src="./assets/sentientia-ai-mascot.png" alt="Sentientia male AI learning advisor" />
+        <video id="avatar-video" muted playsinline preload="auto" aria-label="Animated Sentientia learning advisor"></video>
         <div class="voice-bars" aria-hidden="true"><i style="--bar:.5"></i><i style="--bar:1"></i><i style="--bar:.7"></i><i style="--bar:1.2"></i><i style="--bar:.6"></i></div>
         <div class="brand"><span class="brand-mark">S</span><span>Sentientia · Intelligent Learning</span></div>
       </section>
@@ -67,22 +84,105 @@
         <div class="controls">
           <button id="voice-toggle" type="button" aria-pressed="true">🔊 Voice on</button>
           <button id="pause-voice" type="button" aria-pressed="false" disabled>⏸ Pause</button>
-          <span id="voice-status">Browser voice</span>
+          <span id="voice-status">Gemini Indian voice ready</span>
         </div>
         <div id="reply" role="status" aria-live="polite">Ready when you are.</div>
         <div id="sources" aria-label="Answer sources"></div>
       </aside>
     </main>
 
-    <script src="./config.js"></script>
+    <script src="./config.js?v=20260818-live1"></script>
     <script type="importmap">
       { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/" } }
     </script>
     <script type="module">
       import * as THREE from "three";
       import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+      import { LiveAvatarSession } from "./live-audio.js?v=20260818-quota1";
+
+      const apiBaseUrl = window.APP_CONFIG?.API_BASE_URL?.replace(/\/$/, "");
+      const pageParams = new URLSearchParams(location.search);
+      const requestedClient = pageParams.get("client") || "sentientia";
+      const clientId = /^[a-z0-9][a-z0-9-]{1,39}$/.test(requestedClient) ? requestedClient : "sentientia";
+      const liveVoiceMode = pageParams.get("voice") === "live";
+      const fallbackTenant = {
+        client_id:"sentientia", company_name:"Sentientia", assistant_name:"Sentientia AI",
+        tagline:"Intelligent Learning", eyebrow:"Sentientia AI · Client prototype",
+        headline:"Intelligent learning starts here.", description:"Talk with Sentientia's AI advisor about enterprise learning services and platforms.",
+        welcome_message:"Ready when you are.", primary_color:"#76dc52", secondary_color:"#071711",
+      avatar_url:"/assets/sentientia-avatar.glb?v=20260814-14",
+        suggested_questions:["What does Sentientia do?","Explore our learning platforms","How can you support multilingual learning?"]
+      };
+      let tenant = fallbackTenant;
+      if (clientId === "sentientia") {
+        // Render the bundled demo immediately. This request wakes Cloud Run in
+        // the background while the greeting plays, instead of blocking avatar startup.
+        fetch(`${apiBaseUrl}/health`, { cache:"no-store" })
+          .catch((error) => console.warn("API warm-up is still pending", error));
+      } else {
+        try {
+          const tenantResponse = await fetch(`${apiBaseUrl}/clients/${clientId}/config`, { cache:"no-store" });
+          if (!tenantResponse.ok) throw new Error(`Client configuration failed (${tenantResponse.status})`);
+          tenant = await tenantResponse.json();
+        } catch (error) {
+          console.warn("Using default client configuration", error);
+        }
+      }
+      const resolveAssetUrl = value => !value ? "" : value.startsWith("/clients/") ? `${apiBaseUrl}${value}` : new URL(value, location.origin).href;
+      document.title = `${tenant.company_name} AI Learning Advisor`;
+      document.documentElement.style.setProperty("--brand-primary", tenant.primary_color || "#76dc52");
+      document.documentElement.style.setProperty("--brand-secondary", tenant.secondary_color || "#071711");
+      document.querySelector("#stage").setAttribute("aria-label", `${tenant.company_name} AI avatar`);
+      document.querySelector("#status").textContent = `${tenant.assistant_name} online`;
+      document.querySelector(".brand-mark").textContent = tenant.logo_url ? "" : tenant.company_name.slice(0,1).toUpperCase();
+      document.querySelector(".brand span:last-child").textContent = `${tenant.company_name} · ${tenant.tagline}`;
+      document.querySelector(".eyebrow").textContent = tenant.eyebrow;
+      document.querySelector("h1").textContent = tenant.headline;
+      document.querySelector("aside > p").textContent = tenant.description;
+      document.querySelector("#reply").textContent = tenant.welcome_message;
+      const logoUrl = resolveAssetUrl(tenant.logo_url);
+      if (logoUrl) {
+        const mark = document.querySelector(".brand-mark");
+        mark.style.background = `center/contain no-repeat url("${logoUrl}")`;
+      }
+      const suggestions = document.querySelector(".suggestions");
+      suggestions.replaceChildren();
+      (tenant.suggested_questions || []).slice(0,6).forEach(question => {
+        const button = document.createElement("button"); button.type="button";
+        button.dataset.question=question; button.textContent=question; suggestions.append(button);
+      });
 
       const stage = document.querySelector("#stage");
+      const avatarVideo = document.querySelector("#avatar-video");
+      const videoMode = clientId === "sentientia";
+      const avatarVideos = Object.fromEntries(
+        ["greeting", "idle", "listening", "thinking", "speaking", "positive-feedback"]
+          .map((name) => [name, `./avatar-videos/avatar-${name}.mp4`]),
+      );
+      let avatarVideoState = "";
+      let positiveFeedbackPending = false;
+
+      function setAvatarVideoState(state, restart = false) {
+        if (!videoMode || !avatarVideos[state] || (avatarVideoState === state && !restart)) return;
+        avatarVideoState = state;
+        avatarVideo.loop = !["greeting", "positive-feedback"].includes(state);
+        avatarVideo.src = avatarVideos[state];
+        avatarVideo.play().catch((error) => console.warn(`Avatar ${state} video could not autoplay`, error));
+      }
+
+      avatarVideo.addEventListener("ended", () => setAvatarVideoState("idle"));
+      if (videoMode) {
+        avatarVideo.style.display = "block";
+        setAvatarVideoState("greeting");
+        // Cache the interaction clips during the greeting so state changes are immediate.
+        ["idle", "listening", "thinking", "speaking"].forEach((state) => {
+          const preload = document.createElement("video");
+          preload.preload = "auto";
+          preload.muted = true;
+          preload.src = avatarVideos[state];
+          preload.load();
+        });
+      }
 
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(0x071711);
@@ -96,12 +196,13 @@
       renderer.setSize(stage.clientWidth, stage.clientHeight);
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       stage.prepend(renderer.domElement);
+      if (videoMode) renderer.domElement.style.display = "none";
 
-      scene.add(new THREE.HemisphereLight(0xa8e7ff, 0x102035, 2.4));
-      const key = new THREE.DirectionalLight(0x65d8ff, 4);
+      scene.add(new THREE.HemisphereLight(0xfff5ea, 0x18241f, 2.1));
+      const key = new THREE.DirectionalLight(0xffead8, 3.2);
       key.position.set(3, 4, 5);
       scene.add(key);
-      const rim = new THREE.PointLight(0x765cff, 45, 8);
+      const rim = new THREE.PointLight(0x88dca8, 20, 8);
       rim.position.set(-3, 1, 2);
       scene.add(rim);
 
@@ -113,6 +214,7 @@
       let headBone = null;
       let headBaseRotation = null;
       const bodyBones = {};
+      const boneBaseRotations = new Map();
 
       function setMorph(name, value) {
         facialMeshes.forEach((mesh) => {
@@ -135,9 +237,13 @@
                 object.morphTargetInfluences.fill(0);
               }
             }
-            if (object.isBone && object.name === "Head") headBone = object;
-            if (object.isBone && /^(Neck|Spine|Spine1|Spine2|LeftShoulder|RightShoulder|LeftArm|RightArm)$/.test(object.name)) {
-              bodyBones[object.name] = object;
+            if (object.isBone) {
+              boneBaseRotations.set(object, object.rotation.clone());
+              const normalizedName = object.name.toLowerCase().replace(/[^a-z0-9]/g, "");
+              if (!headBone && normalizedName.includes("head")) headBone = object;
+              if (/neck|spine|chest|shoulder|upperarm/.test(normalizedName)) {
+                bodyBones[normalizedName] = object;
+              }
             }
           });
 
@@ -161,7 +267,7 @@
               mixer.timeScale = 0;
             }
           }
-          document.querySelector("#status").textContent = "Sentientia AI online";
+          document.querySelector("#status").textContent = `${tenant.assistant_name} online`;
       }
 
       function showAvatarFallback(error) {
@@ -169,13 +275,17 @@
         console.error("Avatar model failed to load", error);
         document.querySelector("#avatar-fallback").style.display = "block";
         const status = document.querySelector("#status");
-        status.textContent = "Sentientia AI · compatibility mode";
+        status.textContent = `${tenant.assistant_name} · compatibility mode`;
         status.title = `3D model error: ${message}`;
       }
 
-      // The neutral extension avoids corporate/browser filters that block .glb downloads.
-      const avatarUrl = "./assets/sentientia-avatar.bin?v=20260810-4";
-      avatarLoader.load(avatarUrl, mountAvatar, undefined, async (firstError) => {
+      // Load the project's binary glTF avatar directly through Three.js.
+      // The default Sentientia experience always uses the bundled, versioned GLB.
+      // Uploaded tenant avatars remain configurable for every other client.
+      const avatarUrl = clientId === "sentientia"
+        ? resolveAssetUrl(fallbackTenant.avatar_url)
+        : resolveAssetUrl(tenant.avatar_url) || resolveAssetUrl(fallbackTenant.avatar_url);
+      if (!videoMode) avatarLoader.load(avatarUrl, mountAvatar, undefined, async (firstError) => {
         console.warn("Direct GLB load failed; retrying from memory", firstError);
         try {
           const response = await fetch(avatarUrl, { cache: "no-store" });
@@ -241,6 +351,26 @@
           bar.style.height = `${5 + mouthLevel * variation * 22}px`;
         });
         const seconds = time / 1000;
+        // A small procedural idle keeps static GLBs alive even when the source
+        // model contains no animation clip. Values stay deliberately subtle so
+        // the trainer remains composed and corporate.
+        const breath = Math.sin(seconds * 1.65);
+        avatar.position.y = Math.sin(seconds * 0.82) * 0.006;
+        avatar.rotation.y = Math.sin(seconds * 0.34) * 0.018;
+        avatar.rotation.x = Math.sin(seconds * 0.47 + 0.8) * 0.004;
+        Object.entries(bodyBones).forEach(([name, bone]) => {
+          const base = boneBaseRotations.get(bone);
+          if (!base) return;
+          const isUpperTorso = /chest|spine2|spine3/.test(name);
+          bone.rotation.x = base.x + breath * (isUpperTorso ? 0.010 : 0.004);
+          if (/shoulder|upperarm/.test(name)) {
+            bone.rotation.z = base.z + breath * (name.includes("left") ? 0.003 : -0.003);
+          }
+        });
+        if (headBone && headBaseRotation && !isSpeaking) {
+          headBone.rotation.y = headBaseRotation.y + Math.sin(seconds * 0.41) * 0.025;
+          headBone.rotation.x = headBaseRotation.x + Math.sin(seconds * 0.29 + 1.2) * 0.012;
+        }
         if (blinkStarted < 0 && seconds > nextBlink) blinkStarted = seconds;
         if (blinkStarted >= 0) {
           const phase = (seconds - blinkStarted) / 0.18;
@@ -258,8 +388,9 @@
 
       function animateSpeech(text) {
         isSpeaking = true;
+        setAvatarVideoState("speaking");
         clearTimeout(speechTimer);
-        speechTimer = setTimeout(() => { isSpeaking = false; }, Math.max(1200, text.length * 55));
+        speechTimer = setTimeout(() => { isSpeaking = false; setAvatarVideoState("idle"); }, Math.max(1200, text.length * 55));
       }
 
       function speakWithBrowser(text) {
@@ -274,9 +405,9 @@
         utterance.lang = "en-IN";
         utterance.rate = 0.9;
         utterance.pitch = 0.92;
-        utterance.onstart = () => { clearTimeout(speechTimer); isSpeaking = true; };
-        utterance.onend = () => { isSpeaking = false; mouthLevel = 0; updatePauseButton(false); };
-        utterance.onerror = () => { isSpeaking = false; mouthLevel = 0; updatePauseButton(false); };
+        utterance.onstart = () => { clearTimeout(speechTimer); isSpeaking = true; setAvatarVideoState("speaking"); };
+        utterance.onend = () => { isSpeaking = false; mouthLevel = 0; updatePauseButton(false); setAvatarVideoState(positiveFeedbackPending ? "positive-feedback" : "idle"); positiveFeedbackPending = false; };
+        utterance.onerror = () => { isSpeaking = false; mouthLevel = 0; updatePauseButton(false); setAvatarVideoState("idle"); };
         const voices = speechSynthesis.getVoices();
         utterance.voice = voices.find((voice) => /^en[-_]IN$/i.test(voice.lang) && /natural|google|microsoft|heera|neerja|ravi/i.test(voice.name))
           || voices.find((voice) => /^en[-_]IN$/i.test(voice.lang))
@@ -288,7 +419,8 @@
       }
 
       async function speakReply(text) {
-        if (!voiceEnabled) return;
+        if (!voiceEnabled) { setAvatarVideoState("idle"); return; }
+        setAvatarVideoState("thinking");
         speechSynthesis?.cancel();
         activeSpeechAudio?.pause();
         activeSpeechAudio = null;
@@ -300,31 +432,41 @@
           const response = await fetch(`${ttsUrl}/speak`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text }),
+            body: JSON.stringify({ text, client_id: clientId }),
+            signal: AbortSignal.timeout(6000),
           });
           if (!response.ok) throw new Error(`TTS failed (${response.status})`);
           const objectUrl = URL.createObjectURL(await response.blob());
           const audio = new Audio(objectUrl);
           activeSpeechAudio = audio;
           await window.attachAvatarAudio(audio);
-          audio.onplay = () => { isSpeaking = true; voiceStatus.textContent = "Indian English voice"; updatePauseButton(true); };
-          audio.onended = () => { isSpeaking = false; mouthLevel = 0; activeSpeechAudio = null; updatePauseButton(false); URL.revokeObjectURL(objectUrl); };
-          audio.onerror = () => { URL.revokeObjectURL(objectUrl); activeSpeechAudio = null; speakWithBrowser(text); };
+          audio.onplay = () => { isSpeaking = true; setAvatarVideoState("speaking"); voiceStatus.textContent = "Gemini Indian English voice"; updatePauseButton(true); };
+          audio.onended = () => { isSpeaking = false; mouthLevel = 0; activeSpeechAudio = null; updatePauseButton(false); setAvatarVideoState(positiveFeedbackPending ? "positive-feedback" : "idle"); positiveFeedbackPending = false; URL.revokeObjectURL(objectUrl); };
+          audio.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            activeSpeechAudio = null;
+            isSpeaking = false;
+            updatePauseButton(false);
+            voiceStatus.textContent = "Gemini voice playback failed";
+            setAvatarVideoState("idle");
+          };
           await audio.play();
         } catch (error) {
-          console.warn("Dedicated TTS unavailable; using browser voice", error);
-          voiceStatus.textContent = "Browser voice fallback";
+          console.error("Gemini TTS unavailable", error);
+          isSpeaking = false;
+          updatePauseButton(false);
+          voiceStatus.textContent = "Indian English device voice";
           speakWithBrowser(text);
         }
       }
 
       async function sendPrompt(prompt) {
-        const baseUrl = window.APP_CONFIG?.API_BASE_URL?.replace(/\/$/, "");
+        const baseUrl = apiBaseUrl;
         if (!baseUrl || baseUrl.includes("YOUR_CLOUD_RUN")) throw new Error("Set API_BASE_URL in config.js first.");
         const response = await fetch(`${baseUrl}/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt }),
+          body: JSON.stringify({ prompt, client_id: clientId }),
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data.detail || `Request failed (${response.status})`);
@@ -338,14 +480,80 @@
       const sources = document.querySelector("#sources");
       const send = document.querySelector("#send");
       const mic = document.querySelector("#mic");
+      let liveSession = null;
+      let liveMicActive = false;
+      let liveReplyText = "";
+
+      async function ensureLiveSession() {
+        if (!liveSession) {
+          const liveBaseUrl = window.APP_CONFIG?.LIVE_BASE_URL?.replace(/\/$/, "") || apiBaseUrl;
+          liveSession = new LiveAvatarSession({
+            baseUrl: liveBaseUrl,
+            clientId,
+            onEvent: (message) => {
+              if (message.type === "ready") {
+                voiceStatus.textContent = "Gemini Live voice ready";
+              } else if (message.type === "audio") {
+                isSpeaking = true;
+                setAvatarVideoState("speaking");
+                voiceStatus.textContent = "Gemini Live Indian voice";
+              } else if (message.type === "level") {
+                mouthLevel = Math.min(1, message.value * 6);
+              } else if (message.type === "input_transcript") {
+                input.value = message.text;
+                setAvatarVideoState("thinking");
+              } else if (message.type === "output_transcript") {
+                liveReplyText += message.text;
+                reply.textContent = liveReplyText.trim();
+              } else if (message.type === "interrupted") {
+                isSpeaking = false;
+                mouthLevel = 0;
+                setAvatarVideoState("listening");
+                voiceStatus.textContent = "Listening…";
+              } else if (message.type === "turn_complete") {
+                isSpeaking = false;
+                mouthLevel = 0;
+                setAvatarVideoState(liveMicActive ? "listening" : "idle");
+                voiceStatus.textContent = liveMicActive ? "Gemini Live · listening" : "Gemini Live voice ready";
+              } else if (message.type === "error" || message.type === "closed") {
+                isSpeaking = false;
+                mouthLevel = 0;
+                if (liveMicActive) liveSession?.stopMicrophone();
+                liveMicActive = false;
+                mic.classList.remove("listening");
+                mic.setAttribute("aria-pressed", "false");
+                mic.textContent = "🎙️";
+                setAvatarVideoState("idle");
+                voiceStatus.textContent = message.reason === "quota"
+                  ? "Gemini Live limit reached · retry shortly"
+                  : "Live voice unavailable · standard mode ready";
+                if (message.type === "error" && message.message) reply.textContent = message.message;
+              }
+            },
+          });
+        }
+        voiceStatus.textContent = "Connecting Gemini Live…";
+        await liveSession.connect();
+        return liveSession;
+      }
+
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         send.disabled = true;
         reply.textContent = "Thinking…";
+        setAvatarVideoState("thinking");
         sources.replaceChildren();
         try {
+          if (liveVoiceMode && voiceEnabled) {
+            liveReplyText = "";
+            const session = await ensureLiveSession();
+            await session.sendText(input.value.trim());
+            input.value = "";
+            return;
+          }
           const data = await sendPrompt(input.value.trim());
           reply.textContent = data.reply;
+          positiveFeedbackPending = /\b(correct|excellent|well done|great job|congratulations|that's right)\b/i.test(data.reply);
           (data.sources || []).forEach((source) => {
             const badge = document.createElement("span");
             badge.textContent = source.label;
@@ -356,6 +564,7 @@
         } catch (error) {
           console.error(error);
           reply.textContent = error.message;
+          setAvatarVideoState("idle");
         } finally {
           send.disabled = false;
           input.focus();
@@ -372,6 +581,7 @@
       const voiceToggle = document.querySelector("#voice-toggle");
       const pauseVoice = document.querySelector("#pause-voice");
       const voiceStatus = document.querySelector("#voice-status");
+      if (liveVoiceMode) voiceStatus.textContent = "Gemini Live voice selected";
       function updatePauseButton(active) {
         pauseVoice.disabled = !active;
         pauseVoice.setAttribute("aria-pressed", String(voicePaused));
@@ -384,7 +594,7 @@
         voiceEnabled = !voiceEnabled;
         voiceToggle.setAttribute("aria-pressed", String(voiceEnabled));
         voiceToggle.textContent = voiceEnabled ? "🔊 Voice on" : "🔇 Voice off";
-        voiceStatus.textContent = voiceEnabled ? "Indian English voice" : "Muted";
+        voiceStatus.textContent = voiceEnabled ? "Gemini Indian voice ready" : "Muted";
         if (!voiceEnabled) {
           isSpeaking = false;
           voicePaused = false;
@@ -392,6 +602,8 @@
           activeSpeechAudio?.pause();
           activeSpeechAudio = null;
           speechSynthesis.cancel();
+          liveSession?.clearPlayback();
+          setAvatarVideoState("idle");
         }
       });
       pauseVoice.addEventListener("click", () => {
@@ -401,18 +613,50 @@
           if (activeSpeechAudio) activeSpeechAudio.pause();
           else speechSynthesis.pause();
           isSpeaking = false;
+          setAvatarVideoState("idle");
           voiceStatus.textContent = "Speech paused";
         } else {
           if (activeSpeechAudio) activeSpeechAudio.play();
           else speechSynthesis.resume();
           isSpeaking = true;
-          voiceStatus.textContent = activeSpeechAudio ? "Indian English voice" : "Browser voice";
+          setAvatarVideoState("speaking");
+          voiceStatus.textContent = activeSpeechAudio ? "Gemini Indian English voice" : "Browser voice";
         }
         updatePauseButton(true);
       });
 
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (SpeechRecognition) {
+      if (liveVoiceMode) {
+        mic.addEventListener("click", async () => {
+          try {
+            const session = await ensureLiveSession();
+            if (liveMicActive) {
+              session.stopMicrophone();
+              liveMicActive = false;
+              mic.classList.remove("listening");
+              mic.setAttribute("aria-pressed", "false");
+              mic.textContent = "🎙️";
+              setAvatarVideoState("thinking");
+              voiceStatus.textContent = "Gemini Live · responding";
+            } else {
+              await session.startMicrophone();
+              liveMicActive = true;
+              liveReplyText = "";
+              reply.textContent = "Listening…";
+              mic.classList.add("listening");
+              mic.setAttribute("aria-pressed", "true");
+              mic.textContent = "⏹";
+              setAvatarVideoState("listening");
+              voiceStatus.textContent = "Gemini Live · listening";
+            }
+          } catch (error) {
+            console.error(error);
+            reply.textContent = error.message;
+            voiceStatus.textContent = "Live voice unavailable · standard mode ready";
+            setAvatarVideoState("idle");
+          }
+        });
+      } else if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
         recognition.lang = navigator.language || "en-US";
         recognition.interimResults = true;
@@ -434,6 +678,7 @@
           mic.setAttribute("aria-pressed", "true");
           mic.textContent = "⏹";
           reply.textContent = "Listening…";
+          setAvatarVideoState("listening");
         };
         recognition.onresult = (event) => {
           let interimTranscript = "";
@@ -449,7 +694,7 @@
           mic.setAttribute("aria-pressed", "false");
           mic.textContent = "🎙️";
           if (finalTranscript.trim()) form.requestSubmit();
-          else if (reply.textContent === "Listening…") reply.textContent = "I didn’t hear a question. Please try again.";
+          else if (reply.textContent === "Listening…") { reply.textContent = "I didn’t hear a question. Please try again."; setAvatarVideoState("idle"); }
         };
         recognition.onerror = (event) => {
           mic.classList.remove("listening");
@@ -458,6 +703,7 @@
           reply.textContent = event.error === "not-allowed"
             ? "Microphone access was blocked. Allow it in your browser’s site settings."
             : `Microphone error: ${event.error}`;
+          setAvatarVideoState("idle");
         };
       } else {
         mic.disabled = true;
@@ -469,6 +715,7 @@
         camera.updateProjectionMatrix();
         renderer.setSize(stage.clientWidth, stage.clientHeight);
       });
+      addEventListener("beforeunload", () => liveSession?.close());
     </script>
   </body>
 </html>
