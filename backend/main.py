@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import secrets
+import time
 import wave
 from pathlib import Path
 
@@ -185,7 +186,7 @@ def live_system_instruction(client_id: str, config: dict) -> str:
     retriever = refresh_retriever(client_id)
     # Keep enough verified material in the persistent Live context for spoken
     # questions while leaving ample room for the conversation itself.
-    knowledge = format_context(retriever.chunks)[:80_000]
+    knowledge = format_context(retriever.chunks)[:30_000]
     return (
         f"{BASE_INSTRUCTION}\n\nCLIENT PERSONA:\n{config['persona']}\n\n"
         f"VERIFIED {config['company_name'].upper()} KNOWLEDGE:\n{knowledge}\n\n"
@@ -346,6 +347,7 @@ def chat(request: ChatRequest) -> ChatResponse:
 
 @app.websocket("/ws/live/{client_id}")
 async def live_avatar(websocket: WebSocket, client_id: str) -> None:
+    connection_started = time.perf_counter()
     origin = websocket.headers.get("origin", "")
     local_origins = {"http://127.0.0.1:4173", "http://localhost:4173"}
     if allowed_origins != ["*"] and origin not in {*allowed_origins, *local_origins}:
@@ -383,13 +385,34 @@ async def live_avatar(websocket: WebSocket, client_id: str) -> None:
     client = get_genai_client(attempts=1)
     try:
         async with client.aio.live.connect(model=model, config=live_config) as session:
-            await websocket.send_json({"type": "ready", "model": model, "sampleRate": 24_000})
+            ready_ms = round((time.perf_counter() - connection_started) * 1000)
+            logger.info("Gemini Live ready for %s in %d ms", client_id, ready_ms)
+            await websocket.send_json({
+                "type": "ready",
+                "model": model,
+                "sampleRate": 24_000,
+                "connectMs": ready_ms,
+            })
 
             async def browser_to_gemini() -> None:
                 while True:
-                    message = await websocket.receive_json()
+                    event = await websocket.receive()
+                    if event["type"] == "websocket.disconnect":
+                        raise WebSocketDisconnect(event.get("code", 1000))
+                    audio = event.get("bytes")
+                    if audio is not None:
+                        if audio:
+                            await session.send_realtime_input(
+                                audio=types.Blob(data=audio, mime_type="audio/pcm;rate=16000")
+                            )
+                        continue
+                    raw_message = event.get("text")
+                    if not raw_message:
+                        continue
+                    message = json.loads(raw_message)
                     kind = message.get("type")
                     if kind == "audio":
+                        # Backward compatibility for clients cached before binary transport.
                         audio = base64.b64decode(message.get("data", ""), validate=True)
                         if audio:
                             await session.send_realtime_input(
@@ -426,11 +449,7 @@ async def live_avatar(websocket: WebSocket, client_id: str) -> None:
                                     data = part.inline_data.data
                                     if isinstance(data, str):
                                         data = base64.b64decode(data)
-                                    await websocket.send_json({
-                                        "type": "audio",
-                                        "data": base64.b64encode(data).decode("ascii"),
-                                        "sampleRate": 24_000,
-                                    })
+                                    await websocket.send_bytes(data)
                         if content.generation_complete:
                             await websocket.send_json({"type": "turn_complete"})
                     if response.go_away:

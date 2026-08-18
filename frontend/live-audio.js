@@ -1,19 +1,3 @@
-function bytesToBase64(buffer) {
-  const bytes = new Uint8Array(buffer);
-  let binary = "";
-  for (let offset = 0; offset < bytes.length; offset += 0x8000) {
-    binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
-  }
-  return btoa(binary);
-}
-
-function base64ToBuffer(value) {
-  const binary = atob(value);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-  return bytes.buffer;
-}
-
 export class LiveAvatarSession {
   constructor({ baseUrl, clientId, onEvent }) {
     this.baseUrl = baseUrl;
@@ -31,8 +15,8 @@ export class LiveAvatarSession {
     if (!this.context) {
       this.context = new AudioContext({ latencyHint: "interactive" });
       await Promise.all([
-        this.context.audioWorklet.addModule("./mic-capture-worklet.js"),
-        this.context.audioWorklet.addModule("./pcm-playback-worklet.js"),
+        this.context.audioWorklet.addModule("./mic-capture-worklet.js?v=20260818-binary1"),
+        this.context.audioWorklet.addModule("./pcm-playback-worklet.js?v=20260818-binary1"),
       ]);
       this.playback = new AudioWorkletNode(this.context, "pcm-playback", {
         numberOfInputs: 0,
@@ -56,16 +40,19 @@ export class LiveAvatarSession {
     url.search = "";
     this.readyPromise = new Promise((resolve, reject) => {
       const socket = new WebSocket(url);
+      socket.binaryType = "arraybuffer";
       this.socket = socket;
       socket.onmessage = async ({ data }) => {
+        if (data instanceof ArrayBuffer) {
+          await this.ensureAudio();
+          this.playback.port.postMessage({ type: "audio", buffer: data }, [data]);
+          this.onEvent({ type: "audio" });
+          return;
+        }
         const message = JSON.parse(data);
         if (message.type === "ready") {
           this.readyPromise = null;
           resolve();
-        } else if (message.type === "audio") {
-          await this.ensureAudio();
-          const buffer = base64ToBuffer(message.data);
-          this.playback.port.postMessage({ type: "audio", buffer }, [buffer]);
         } else if (message.type === "interrupted") {
           this.clearPlayback();
         }
@@ -104,7 +91,7 @@ export class LiveAvatarSession {
     silent.gain.value = 0;
     this.capture.port.onmessage = ({ data }) => {
       if (this.socket?.readyState === WebSocket.OPEN) {
-        this.socket.send(JSON.stringify({ type: "audio", data: bytesToBase64(data) }));
+        this.socket.send(data);
       }
     };
     source.connect(this.capture).connect(silent).connect(this.context.destination);
