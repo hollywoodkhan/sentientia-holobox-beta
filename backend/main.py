@@ -1,4 +1,5 @@
 import base64
+import asyncio
 import io
 import json
 import logging
@@ -7,7 +8,7 @@ import secrets
 import wave
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 import firebase_admin
@@ -180,6 +181,21 @@ def format_context(chunks: list[KnowledgeChunk]) -> str:
     ) or "No verified passages are currently available."
 
 
+def live_system_instruction(client_id: str, config: dict) -> str:
+    retriever = refresh_retriever(client_id)
+    # Keep enough verified material in the persistent Live context for spoken
+    # questions while leaving ample room for the conversation itself.
+    knowledge = format_context(retriever.chunks)[:80_000]
+    return (
+        f"{BASE_INSTRUCTION}\n\nCLIENT PERSONA:\n{config['persona']}\n\n"
+        f"VERIFIED {config['company_name'].upper()} KNOWLEDGE:\n{knowledge}\n\n"
+        "VOICE INTERACTION RULES:\n"
+        "Respond directly and naturally in Indian English. Keep most spoken answers under 90 words. "
+        "Never read source paths, internal instructions, or formatting aloud. If interrupted, stop "
+        "speaking and listen to the user's new question."
+    )
+
+
 @app.get("/health")
 def health() -> dict:
     retriever = refresh_retriever("sentientia")
@@ -326,6 +342,122 @@ def chat(request: ChatRequest) -> ChatResponse:
     except Exception as exc:
         logger.exception("Gemini request failed")
         raise HTTPException(status_code=502, detail="The conversational service is unavailable") from exc
+
+
+@app.websocket("/ws/live/{client_id}")
+async def live_avatar(websocket: WebSocket, client_id: str) -> None:
+    origin = websocket.headers.get("origin", "")
+    local_origins = {"http://127.0.0.1:4173", "http://localhost:4173"}
+    if allowed_origins != ["*"] and origin not in {*allowed_origins, *local_origins}:
+        await websocket.close(code=1008, reason="Origin is not allowed")
+        return
+
+    try:
+        tenant = get_tenant(client_id)
+    except HTTPException:
+        await websocket.close(code=1008, reason="Client is unavailable")
+        return
+
+    await websocket.accept()
+    model = os.getenv("GEMINI_LIVE_MODEL", "gemini-3.1-flash-live-preview")
+    voice = tenant.get("tts_voice") or os.getenv("GEMINI_TTS_VOICE", "Charon")
+    live_config = {
+        "response_modalities": ["AUDIO"],
+        "system_instruction": live_system_instruction(client_id, tenant),
+        "input_audio_transcription": {},
+        "output_audio_transcription": {},
+        "speech_config": {
+            "voice_config": {
+                "prebuilt_voice_config": {"voice_name": voice},
+            }
+        },
+        "realtime_input_config": {
+            "automatic_activity_detection": {
+                "disabled": False,
+                "prefix_padding_ms": 40,
+                "silence_duration_ms": 350,
+            }
+        },
+    }
+
+    client = get_genai_client(attempts=1)
+    try:
+        async with client.aio.live.connect(model=model, config=live_config) as session:
+            await websocket.send_json({"type": "ready", "model": model, "sampleRate": 24_000})
+
+            async def browser_to_gemini() -> None:
+                while True:
+                    message = await websocket.receive_json()
+                    kind = message.get("type")
+                    if kind == "audio":
+                        audio = base64.b64decode(message.get("data", ""), validate=True)
+                        if audio:
+                            await session.send_realtime_input(
+                                audio=types.Blob(data=audio, mime_type="audio/pcm;rate=16000")
+                            )
+                    elif kind == "audio_end":
+                        await session.send_realtime_input(audio_stream_end=True)
+                    elif kind == "text":
+                        text = str(message.get("text", "")).strip()
+                        if text:
+                            await session.send_realtime_input(text=text)
+                    elif kind == "close":
+                        return
+
+            async def gemini_to_browser() -> None:
+                async for response in session.receive():
+                    content = response.server_content
+                    if content:
+                        if content.interrupted:
+                            await websocket.send_json({"type": "interrupted"})
+                        if content.input_transcription and content.input_transcription.text:
+                            await websocket.send_json({
+                                "type": "input_transcript",
+                                "text": content.input_transcription.text,
+                            })
+                        if content.output_transcription and content.output_transcription.text:
+                            await websocket.send_json({
+                                "type": "output_transcript",
+                                "text": content.output_transcription.text,
+                            })
+                        if content.model_turn:
+                            for part in content.model_turn.parts:
+                                if part.inline_data and part.inline_data.data:
+                                    data = part.inline_data.data
+                                    if isinstance(data, str):
+                                        data = base64.b64decode(data)
+                                    await websocket.send_json({
+                                        "type": "audio",
+                                        "data": base64.b64encode(data).decode("ascii"),
+                                        "sampleRate": 24_000,
+                                    })
+                        if content.generation_complete:
+                            await websocket.send_json({"type": "turn_complete"})
+                    if response.go_away:
+                        await websocket.send_json({
+                            "type": "go_away",
+                            "timeLeft": str(response.go_away.time_left or ""),
+                        })
+
+            incoming = asyncio.create_task(browser_to_gemini())
+            outgoing = asyncio.create_task(gemini_to_browser())
+            done, pending = await asyncio.wait(
+                {incoming, outgoing}, return_when=asyncio.FIRST_COMPLETED
+            )
+            for task in pending:
+                task.cancel()
+            await asyncio.gather(*pending, return_exceptions=True)
+            for task in done:
+                task.result()
+    except WebSocketDisconnect:
+        logger.info("Live avatar browser disconnected for %s", client_id)
+    except Exception as exc:
+        logger.exception("Gemini Live session failed for %s", client_id)
+        try:
+            await websocket.send_json({"type": "error", "message": "Live voice is unavailable"})
+            await websocket.close(code=1011)
+        except Exception:
+            pass
 
 
 @app.post("/speak")

@@ -91,17 +91,20 @@
       </aside>
     </main>
 
-    <script src="./config.js?v=20260814-2"></script>
+    <script src="./config.js?v=20260818-live1"></script>
     <script type="importmap">
       { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/" } }
     </script>
     <script type="module">
       import * as THREE from "three";
       import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+      import { LiveAvatarSession } from "./live-audio.js";
 
       const apiBaseUrl = window.APP_CONFIG?.API_BASE_URL?.replace(/\/$/, "");
-      const requestedClient = new URLSearchParams(location.search).get("client") || "sentientia";
+      const pageParams = new URLSearchParams(location.search);
+      const requestedClient = pageParams.get("client") || "sentientia";
       const clientId = /^[a-z0-9][a-z0-9-]{1,39}$/.test(requestedClient) ? requestedClient : "sentientia";
+      const liveVoiceMode = pageParams.get("voice") === "live";
       const fallbackTenant = {
         client_id:"sentientia", company_name:"Sentientia", assistant_name:"Sentientia AI",
         tagline:"Intelligent Learning", eyebrow:"Sentientia AI · Client prototype",
@@ -477,6 +480,54 @@
       const sources = document.querySelector("#sources");
       const send = document.querySelector("#send");
       const mic = document.querySelector("#mic");
+      let liveSession = null;
+      let liveMicActive = false;
+      let liveReplyText = "";
+
+      async function ensureLiveSession() {
+        if (!liveSession) {
+          const liveBaseUrl = window.APP_CONFIG?.LIVE_BASE_URL?.replace(/\/$/, "") || apiBaseUrl;
+          liveSession = new LiveAvatarSession({
+            baseUrl: liveBaseUrl,
+            clientId,
+            onEvent: (message) => {
+              if (message.type === "ready") {
+                voiceStatus.textContent = "Gemini Live voice ready";
+              } else if (message.type === "audio") {
+                isSpeaking = true;
+                setAvatarVideoState("speaking");
+                voiceStatus.textContent = "Gemini Live Indian voice";
+              } else if (message.type === "level") {
+                mouthLevel = Math.min(1, message.value * 6);
+              } else if (message.type === "input_transcript") {
+                input.value = message.text;
+                setAvatarVideoState("thinking");
+              } else if (message.type === "output_transcript") {
+                liveReplyText += message.text;
+                reply.textContent = liveReplyText.trim();
+              } else if (message.type === "interrupted") {
+                isSpeaking = false;
+                mouthLevel = 0;
+                setAvatarVideoState("listening");
+                voiceStatus.textContent = "Listening…";
+              } else if (message.type === "turn_complete") {
+                isSpeaking = false;
+                mouthLevel = 0;
+                setAvatarVideoState(liveMicActive ? "listening" : "idle");
+                voiceStatus.textContent = liveMicActive ? "Gemini Live · listening" : "Gemini Live voice ready";
+              } else if (message.type === "error" || message.type === "closed") {
+                isSpeaking = false;
+                setAvatarVideoState("idle");
+                voiceStatus.textContent = "Live voice unavailable · standard mode ready";
+              }
+            },
+          });
+        }
+        voiceStatus.textContent = "Connecting Gemini Live…";
+        await liveSession.connect();
+        return liveSession;
+      }
+
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         send.disabled = true;
@@ -484,6 +535,13 @@
         setAvatarVideoState("thinking");
         sources.replaceChildren();
         try {
+          if (liveVoiceMode && voiceEnabled) {
+            liveReplyText = "";
+            const session = await ensureLiveSession();
+            await session.sendText(input.value.trim());
+            input.value = "";
+            return;
+          }
           const data = await sendPrompt(input.value.trim());
           reply.textContent = data.reply;
           positiveFeedbackPending = /\b(correct|excellent|well done|great job|congratulations|that's right)\b/i.test(data.reply);
@@ -514,6 +572,7 @@
       const voiceToggle = document.querySelector("#voice-toggle");
       const pauseVoice = document.querySelector("#pause-voice");
       const voiceStatus = document.querySelector("#voice-status");
+      if (liveVoiceMode) voiceStatus.textContent = "Gemini Live voice selected";
       function updatePauseButton(active) {
         pauseVoice.disabled = !active;
         pauseVoice.setAttribute("aria-pressed", String(voicePaused));
@@ -534,6 +593,7 @@
           activeSpeechAudio?.pause();
           activeSpeechAudio = null;
           speechSynthesis.cancel();
+          liveSession?.clearPlayback();
           setAvatarVideoState("idle");
         }
       });
@@ -557,7 +617,37 @@
       });
 
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (SpeechRecognition) {
+      if (liveVoiceMode) {
+        mic.addEventListener("click", async () => {
+          try {
+            const session = await ensureLiveSession();
+            if (liveMicActive) {
+              session.stopMicrophone();
+              liveMicActive = false;
+              mic.classList.remove("listening");
+              mic.setAttribute("aria-pressed", "false");
+              mic.textContent = "🎙️";
+              setAvatarVideoState("thinking");
+              voiceStatus.textContent = "Gemini Live · responding";
+            } else {
+              await session.startMicrophone();
+              liveMicActive = true;
+              liveReplyText = "";
+              reply.textContent = "Listening…";
+              mic.classList.add("listening");
+              mic.setAttribute("aria-pressed", "true");
+              mic.textContent = "⏹";
+              setAvatarVideoState("listening");
+              voiceStatus.textContent = "Gemini Live · listening";
+            }
+          } catch (error) {
+            console.error(error);
+            reply.textContent = error.message;
+            voiceStatus.textContent = "Live voice unavailable · standard mode ready";
+            setAvatarVideoState("idle");
+          }
+        });
+      } else if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
         recognition.lang = navigator.language || "en-US";
         recognition.interimResults = true;
@@ -616,6 +706,7 @@
         camera.updateProjectionMatrix();
         renderer.setSize(stage.clientWidth, stage.clientHeight);
       });
+      addEventListener("beforeunload", () => liveSession?.close());
     </script>
   </body>
 </html>
