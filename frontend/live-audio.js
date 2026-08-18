@@ -64,6 +64,7 @@ export class LiveAvatarSession {
       };
       socket.onclose = () => {
         this.readyPromise = null;
+        this.stopMicrophone();
         this.onEvent({ type: "closed" });
       };
     });

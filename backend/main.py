@@ -466,14 +466,21 @@ async def live_avatar(websocket: WebSocket, client_id: str) -> None:
             for task in pending:
                 task.cancel()
             await asyncio.gather(*pending, return_exceptions=True)
-            for task in done:
-                task.result()
+            results = await asyncio.gather(*done, return_exceptions=True)
+            failure = next((result for result in results if isinstance(result, BaseException)), None)
+            if failure:
+                raise failure
     except WebSocketDisconnect:
         logger.info("Live avatar browser disconnected for %s", client_id)
     except Exception as exc:
         logger.exception("Gemini Live session failed for %s", client_id)
+        exhausted = "resource has been exhausted" in str(exc).lower()
+        message = (
+            "Gemini Live capacity is exhausted. Please retry shortly or use standard mode."
+            if exhausted else "Live voice is unavailable. Please use standard mode."
+        )
         try:
-            await websocket.send_json({"type": "error", "message": "Live voice is unavailable"})
+            await websocket.send_json({"type": "error", "message": message, "reason": "quota" if exhausted else "service"})
             await websocket.close(code=1011)
         except Exception:
             pass

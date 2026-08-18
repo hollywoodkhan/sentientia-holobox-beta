@@ -98,7 +98,7 @@
     <script type="module">
       import * as THREE from "three";
       import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-      import { LiveAvatarSession } from "./live-audio.js?v=20260818-binary1";
+      import { LiveAvatarSession } from "./live-audio.js?v=20260818-quota1";
 
       const apiBaseUrl = window.APP_CONFIG?.API_BASE_URL?.replace(/\/$/, "");
       const pageParams = new URLSearchParams(location.search);
@@ -517,8 +517,17 @@
                 voiceStatus.textContent = liveMicActive ? "Gemini Live · listening" : "Gemini Live voice ready";
               } else if (message.type === "error" || message.type === "closed") {
                 isSpeaking = false;
+                mouthLevel = 0;
+                if (liveMicActive) liveSession?.stopMicrophone();
+                liveMicActive = false;
+                mic.classList.remove("listening");
+                mic.setAttribute("aria-pressed", "false");
+                mic.textContent = "🎙️";
                 setAvatarVideoState("idle");
-                voiceStatus.textContent = "Live voice unavailable · standard mode ready";
+                voiceStatus.textContent = message.reason === "quota"
+                  ? "Gemini Live limit reached · retry shortly"
+                  : "Live voice unavailable · standard mode ready";
+                if (message.type === "error" && message.message) reply.textContent = message.message;
               }
             },
           });
@@ -706,11 +715,6 @@
         camera.updateProjectionMatrix();
         renderer.setSize(stage.clientWidth, stage.clientHeight);
       });
-      if (liveVoiceMode && voiceEnabled) {
-        // Warm Cloud Run and the Gemini Live session without requesting microphone
-        // permission or starting an AudioContext before a user gesture.
-        setTimeout(() => ensureLiveSession().catch((error) => console.warn("Live preconnect failed", error)), 1200);
-      }
       addEventListener("beforeunload", () => liveSession?.close());
     </script>
   </body>
